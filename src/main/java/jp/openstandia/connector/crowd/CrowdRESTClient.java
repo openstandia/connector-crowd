@@ -19,6 +19,7 @@ import com.atlassian.crowd.embedded.api.PasswordCredential;
 import com.atlassian.crowd.exception.*;
 import com.atlassian.crowd.integration.rest.entity.GroupEntity;
 import com.atlassian.crowd.integration.rest.entity.UserEntity;
+import com.atlassian.crowd.integration.rest.service.ExceptionUtil;
 import com.atlassian.crowd.integration.rest.service.RestExecutorWrapper;
 import com.atlassian.crowd.model.group.GroupWithAttributes;
 import com.atlassian.crowd.model.user.User;
@@ -78,9 +79,7 @@ public class CrowdRESTClient {
     }
 
     protected ConnectorException handleException(CrowdException e) {
-        if (e instanceof OperationFailedException) {
-            return new ConnectorIOException(e);
-        }
+        int statusCode = ExceptionUtil.getStatusCode(e);
         if (e instanceof InvalidAuthenticationException) {
             return new ConnectionFailedException(e);
         }
@@ -92,6 +91,9 @@ public class CrowdRESTClient {
         }
         if (e instanceof ObjectNotFoundException) {
             return new UnknownUidException(e);
+        }
+        if (statusCode == 400) {
+            return new InvalidAttributeValueException(e);
         }
         return new ConnectorIOException(e);
     }

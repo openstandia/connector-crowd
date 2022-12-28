@@ -47,23 +47,25 @@ public class CrowdGroupHandler implements ObjectHandler {
                 = SchemaDefinition.newBuilder(GROUP_OBJECT_CLASS, CrowdGroupModel.class, GroupEntity.class);
 
         // __UID__
-        // The id for the user. Must be unique and unchangeable.
-        sb.addUid("groupname",
-                SchemaDefinition.Types.UUID,
+        // The id for the group. Must be unique and unchangeable.
+        // Currently, the group doesn't have key like user, so it's same as "groupname".
+        sb.addUid("key",
+                SchemaDefinition.Types.STRING_CASE_IGNORE,
                 null,
                 (source) -> source.getName(),
-                null,
-                REQUIRED, NOT_CREATABLE, NOT_UPDATEABLE
+                "name",
+                NOT_CREATABLE, NOT_UPDATEABLE
         );
 
         // username (__NAME__)
         // The name for the group. Must be unique and changeable.
         // Also, it's case-insensitive.
         sb.addName("groupname",
-                SchemaDefinition.Types.STRING,
+                SchemaDefinition.Types.STRING_CASE_IGNORE,
                 (source, dest) -> dest.setGroupName(source),
                 (source) -> source.getName(),
-                null
+                "name",
+                REQUIRED, NOT_UPDATEABLE
         );
 
         // __ENABLE__

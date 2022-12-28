@@ -55,21 +55,22 @@ public class CrowdUserHandler implements ObjectHandler {
         // __UID__
         // The id for the user. Must be unique and unchangeable.
         sb.addUid("key",
-                SchemaDefinition.Types.UUID,
+                SchemaDefinition.Types.STRING_CASE_IGNORE,
                 null,
                 (source) -> source.getExternalId(),
-                null,
-                REQUIRED, NOT_CREATABLE, NOT_UPDATEABLE
+                "name",
+                NOT_CREATABLE, NOT_UPDATEABLE
         );
 
         // username (__NAME__)
         // The name for the user. Must be unique and changeable.
         // Also, it's case-insensitive.
         sb.addName("username",
-                SchemaDefinition.Types.STRING,
+                SchemaDefinition.Types.STRING_CASE_IGNORE,
                 (source, dest) -> dest.setUserName(source),
                 (source) -> source.getName(),
-                null
+                "name",
+                REQUIRED
         );
 
         // __PASSWORD__
@@ -78,7 +79,7 @@ public class CrowdUserHandler implements ObjectHandler {
                 (source, dest) -> dest.setPassword(source),
                 null,
                 null,
-                NOT_READABLE, NOT_RETURNED_BY_DEFAULT
+                REQUIRED, NOT_READABLE, NOT_RETURNED_BY_DEFAULT
         );
 
         // __ENABLE__
