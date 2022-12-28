@@ -20,8 +20,10 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.test.common.TestHelpers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.*;
@@ -76,5 +78,55 @@ public abstract class AbstractTest {
             plain.set(String.valueOf(c));
         });
         return plain.get();
+    }
+
+    protected OperationOptions defaultGetOperation(String... explicit) {
+        List<String> attrs = Arrays.stream(explicit).collect(Collectors.toList());
+        attrs.add(OperationalAttributes.PASSWORD_NAME);
+        attrs.add(OperationalAttributes.ENABLE_NAME);
+
+        return new OperationOptionsBuilder()
+                .setReturnDefaultAttributes(true)
+                .setAttributesToGet(attrs)
+                .setAllowPartialResults(true)
+                .build();
+    }
+
+    protected OperationOptions defaultSearchOperation(String... explicit) {
+        List<String> attrs = Arrays.stream(explicit).collect(Collectors.toList());
+        attrs.add(OperationalAttributes.PASSWORD_NAME);
+        attrs.add(OperationalAttributes.ENABLE_NAME);
+
+        return new OperationOptionsBuilder()
+                .setReturnDefaultAttributes(true)
+                .setAttributesToGet(attrs)
+                .setAllowPartialAttributeValues(true)
+                .setPagedResultsOffset(1)
+                .setPageSize(20)
+                .build();
+    }
+
+    protected Object singleAttr(ConnectorObject connectorObject, String attrName) {
+        Attribute attr = connectorObject.getAttributeByName(attrName);
+        if (attr == null) {
+            Assertions.fail(attrName + " is not contained in the connectorObject: " + connectorObject);
+        }
+        List<Object> value = attr.getValue();
+        if (value == null || value.size() != 1) {
+            Assertions.fail(attrName + " is not single value: " + value);
+        }
+        return value.get(0);
+    }
+
+    protected List<Object> multiAttr(ConnectorObject connectorObject, String attrName) {
+        Attribute attr = connectorObject.getAttributeByName(attrName);
+        if (attr == null) {
+            Assertions.fail(attrName + " is not contained in the connectorObject: " + connectorObject);
+        }
+        List<Object> value = attr.getValue();
+        if (value == null) {
+            Assertions.fail(attrName + " is not multiple value: " + value);
+        }
+        return value;
     }
 }

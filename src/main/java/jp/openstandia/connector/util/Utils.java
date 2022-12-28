@@ -119,6 +119,12 @@ public class Utils {
             }
         }
 
+        // If ATTRS_TO_GET option is not present (also, RETURN_DEFAULT_ATTRIBUTES option is not present too),
+        // then the connector should return only those attributes that the resource returns by default.
+        if (options.getAttributesToGet() == null && options.getReturnDefaultAttributes() == null) {
+            attributesToGet.putAll(toReturnedByDefaultAttributesSet(schema));
+        }
+
         return attributesToGet;
     }
 

@@ -44,6 +44,8 @@ public class MockClient extends CrowdRESTClient {
     public MockBiConsumer<String, String> renameUser;
     public MockFunction<Uid, UserEntity> getUserByUid;
     public MockFunction<Name, UserEntity> getUserByName;
+    public MockBiFunction<String, Integer, List<String>> getGroupsForUser;
+    public MockConsumer<Uid> deleteUser;
     public MockFunction<GroupWithAttributes, Uid> createGroup;
     public MockBiConsumer<String, List<String>> addGroupToGroup;
 
@@ -119,6 +121,16 @@ public class MockClient extends CrowdRESTClient {
     @Override
     public int getUsers(CrowdQueryHandler<UserEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
         return 0;
+    }
+
+    @Override
+    public List<String> getGroupsForUser(String userName, int pageSize) {
+        return getGroupsForUser.apply(userName, pageSize);
+    }
+
+    @Override
+    public void deleteUser(Uid uid) {
+        deleteUser.accept(uid);
     }
 
     // Group
