@@ -71,6 +71,6 @@ public class CrowdGroupModel {
         if (this.removeGroups == null) {
             this.removeGroups = new ArrayList<>();
         }
-        this.addGroups.addAll(groups);
+        this.removeGroups.addAll(groups);
     }
 }

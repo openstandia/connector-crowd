@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static jp.openstandia.connector.util.Utils.handleEmptyAsNull;
 import static jp.openstandia.connector.util.Utils.toZoneDateTime;
 import static org.identityconnectors.framework.common.objects.AttributeInfo.Flags.*;
 
@@ -100,7 +101,7 @@ public class CrowdUserHandler implements ObjectHandler {
         sb.add("first-name",
                 SchemaDefinition.Types.STRING,
                 (source, dest) -> dest.setFirstName(source),
-                (source) -> source.getFirstName(),
+                (source) -> handleEmptyAsNull(source.getFirstName()),
                 null
         );
         sb.add("display-name",

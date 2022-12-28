@@ -139,4 +139,14 @@ public class Utils {
         }
         return 0;
     }
+
+    public static String handleEmptyAsNull(String s) {
+        if (s == null) {
+            return null;
+        }
+        if (s.isEmpty()) {
+            return null;
+        }
+        return s;
+    }
 }
