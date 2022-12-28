@@ -202,7 +202,9 @@ public class CrowdRESTClient {
     }
 
     public int getUsers(CrowdQueryHandler<UserEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
-        int start = pageOffset;
+        // ConnId starts from 1
+        // Crowd starts from 0
+        int start = pageOffset - 1;
         int count = 0;
         try {
             while (true) {
@@ -221,7 +223,7 @@ public class CrowdRESTClient {
                 }
 
                 // search next page
-                start += pageSize + 1;
+                start += pageSize;
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -250,6 +252,7 @@ public class CrowdRESTClient {
     }
 
     public List<String> getGroupsForUser(String username, int pageSize) {
+        // Crowd starts from 0
         int start = 0;
         List<String> results = new ArrayList<>();
         try {
@@ -293,6 +296,7 @@ public class CrowdRESTClient {
     }
 
     public List<String> getGroupsForGroup(String groupName, int pageSize) {
+        // Crowd starts from 0
         int start = 0;
         List<String> results = new ArrayList<>();
         try {
@@ -357,7 +361,9 @@ public class CrowdRESTClient {
     }
 
     public int getGroups(CrowdQueryHandler<GroupEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
-        int start = pageOffset;
+        // ConnId starts from 1
+        // Crowd starts from 0
+        int start = pageOffset - 1;
         int count = 0;
         try {
             while (true) {
@@ -376,7 +382,7 @@ public class CrowdRESTClient {
                 }
 
                 // search next page
-                start += pageSize + 1;
+                start += pageSize;
             }
         } catch (Exception e) {
             throw handleException(e);

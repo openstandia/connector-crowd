@@ -88,7 +88,7 @@ public class CrowdGroupHandler implements ObjectHandler {
                 (source, dest) -> dest.setGroups(source),
                 (add, dest) -> dest.addGroups(add),
                 (remove, dest) -> dest.removeGroups(remove),
-                (source) -> client.getGroupsForUser(source.getName(), configuration.getDefaultQueryPageSize()),
+                (source) -> client.getGroupsForGroup(source.getName(), configuration.getDefaultQueryPageSize()),
                 null,
                 NOT_RETURNED_BY_DEFAULT
         );
@@ -110,6 +110,10 @@ public class CrowdGroupHandler implements ObjectHandler {
 
         Uid newUid = client.createGroup(mapped.toGroup());
 
+        if (mapped.addGroups != null) {
+            client.addGroupToGroup(newUid.getNameHintValue(), mapped.addGroups);
+        }
+
         return newUid;
     }
 
@@ -125,6 +129,12 @@ public class CrowdGroupHandler implements ObjectHandler {
 
         if (dest.hasGroupChange) {
             client.updateGroup(dest.toGroup());
+        }
+        if (dest.addGroups != null) {
+            client.addGroupToGroup(current.getName(), dest.addGroups);
+        }
+        if (dest.removeGroups != null) {
+            client.deleteGroupFromGroup(current.getName(), dest.removeGroups);
         }
 
         return null;
