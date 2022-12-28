@@ -195,7 +195,7 @@ public class CrowdUserHandler implements ObjectHandler {
         CrowdUserModel user = CrowdUserModel.create();
         CrowdUserModel mapped = schema.apply(attributes, user);
 
-        Uid newUid = client.createUser(mapped.toUser(), mapped.password);
+        Uid newUid = client.createUser(mapped.toUser().withName(mapped.newUserName), mapped.password);
 
         if (mapped.addGroups != null) {
             client.addUserToGroup(newUid.getNameHintValue(), mapped.addGroups);

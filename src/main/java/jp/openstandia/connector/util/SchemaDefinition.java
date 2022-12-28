@@ -549,6 +549,14 @@ public class SchemaDefinition {
                     ZonedDateTime date = (ZonedDateTime) AttributeUtil.getSingleValue(source);
                     String formatted = formatDateTime(date);
                     create.accept((T) formatted, dest);
+
+                } else if (type == Types.GUARDED_STRING) {
+                    GuardedString guardedString = AttributeUtil.getGuardedStringValue(source);
+                    create.accept((T) guardedString, dest);
+
+                } else {
+                    T value = (T) AttributeUtil.getSingleValue(source);
+                    create.accept(value, dest);
                 }
             }
         }
