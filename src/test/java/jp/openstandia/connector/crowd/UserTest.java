@@ -332,35 +332,45 @@ class UserTest extends AbstractTest {
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
         assertNull(targetUserName.get());
         assertNull(targetPageSize.get());
+    }
 
+    @Test
+    void getUserByUidWithGroupsButNoOperation() {
         // Given
-        targetUserName.set(null);
-        targetPageSize.set(null);
+        String key = "12345:abc";
+        String userName = "foo";
+        String email = "foo@example.com";
+        String displayName = "Foo Bar";
+        String firstName = "Foo";
+        String lastName = "Bar";
+        boolean active = true;
+        Date createdDate = Date.from(Instant.now());
+        Date updatedDate = Date.from(Instant.now());
+        List<String> groups = list("group1", "group2");
 
-        // When
-        // Request "groups"
-        result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation("groups"));
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name(userName));
+        attrs.add(AttributeBuilder.buildEnabled(false));
 
-        // Then
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
-        assertEquals(key, result.getUid().getUidValue());
-        assertEquals(userName, result.getName().getNameValue());
-        assertEquals(email, singleAttr(result, "email"));
-        assertEquals(displayName, singleAttr(result, "display-name"));
-        assertEquals(firstName, singleAttr(result, "first-name"));
-        assertEquals(lastName, singleAttr(result, "last-name"));
-        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
-        assertEquals(groups, multiAttr(result, "groups"));
-        assertEquals(userName, targetUserName.get());
-        assertEquals(50, targetPageSize.get(), "Not default page size in the configuration");
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
 
-        // Given
-        targetUserName.set(null);
-        targetPageSize.set(null);
+            UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
+            return result;
+        });
+        AtomicReference<String> targetUserName = new AtomicReference<>();
+        AtomicReference<Integer> targetPageSize = new AtomicReference<>();
+        mockClient.getGroupsForUser = ((u, size) -> {
+            targetUserName.set(u);
+            targetPageSize.set(size);
+
+            return groups;
+        });
 
         // When
         // No operation options
-        result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), new OperationOptionsBuilder().build());
+        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), new OperationOptionsBuilder().build());
 
         // Then
         assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
@@ -374,6 +384,58 @@ class UserTest extends AbstractTest {
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
         assertNull(targetUserName.get());
         assertNull(targetPageSize.get());
+    }
+
+    @Test
+    void getUserByUidWithGroups() {
+        // Given
+        String key = "12345:abc";
+        String userName = "foo";
+        String email = "foo@example.com";
+        String displayName = "Foo Bar";
+        String firstName = "Foo";
+        String lastName = "Bar";
+        boolean active = true;
+        Date createdDate = Date.from(Instant.now());
+        Date updatedDate = Date.from(Instant.now());
+        List<String> groups = list("group1", "group2");
+
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name(userName));
+        attrs.add(AttributeBuilder.buildEnabled(false));
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
+
+            UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
+            return result;
+        });
+        AtomicReference<String> targetUserName = new AtomicReference<>();
+        AtomicReference<Integer> targetPageSize = new AtomicReference<>();
+        mockClient.getGroupsForUser = ((u, size) -> {
+            targetUserName.set(u);
+            targetPageSize.set(size);
+
+            return groups;
+        });
+
+        // When
+        // Request "groups"
+        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation("groups"));
+
+        // Then
+        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(key, result.getUid().getUidValue());
+        assertEquals(userName, result.getName().getNameValue());
+        assertEquals(email, singleAttr(result, "email"));
+        assertEquals(displayName, singleAttr(result, "display-name"));
+        assertEquals(firstName, singleAttr(result, "first-name"));
+        assertEquals(lastName, singleAttr(result, "last-name"));
+        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(groups, multiAttr(result, "groups"));
+        assertEquals(userName, targetUserName.get());
+        assertEquals(50, targetPageSize.get(), "Not default page size in the configuration");
     }
 
     @Test
