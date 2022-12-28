@@ -301,27 +301,33 @@ public class SchemaDefinition {
                 .setObjectClass(objectClass);
 
         AttributeMapper uid = attributeMap.get(Uid.NAME);
-        builder.addAttribute(uid.apply(source));
+        addAttribute(builder, uid.apply(source));
 
         // Need to set __NAME__ because it throws IllegalArgumentException
         AttributeMapper name = attributeMap.get(Name.NAME);
-        builder.addAttribute(name.apply(source));
+        addAttribute(builder, name.apply(source));
 
         for (Map.Entry<String, AttributeMapper> entry : attributeMap.entrySet()) {
             // When requested partial attribute values, return incomplete attribute if the attribute is not returned by default
             if (allowPartialAttributeValues && !getReturnedByDefaultAttributesSet().containsKey(entry.getKey())) {
-                builder.addAttribute(createIncompleteAttribute(entry.getKey()));
+                addAttribute(builder, createIncompleteAttribute(entry.getKey()));
                 continue;
             }
             if (shouldReturn(attributesToGet, entry.getKey())) {
                 Attribute value = entry.getValue().apply(source);
-                if (value != null) {
-                    builder.addAttribute(value);
-                }
+                addAttribute(builder, value);
             }
         }
 
         return builder;
+    }
+
+    protected void addAttribute(ConnectorObjectBuilder builder, Attribute attribute) {
+        if (attribute == null) {
+            return;
+        }
+        // Don't set null because it causes NPE
+        builder.addAttribute(attribute);
     }
 
     public String getType() {

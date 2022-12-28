@@ -87,6 +87,9 @@ public class CrowdRESTClient {
         if (e instanceof InvalidUserException) {
             return new AlreadyExistsException(e);
         }
+        if (e instanceof InvalidGroupException) {
+            return new AlreadyExistsException(e);
+        }
         if (e instanceof ObjectNotFoundException) {
             return new UnknownUidException(e);
         }

@@ -51,7 +51,7 @@ public class CrowdGroupHandler implements ObjectHandler {
         sb.addUid("groupname",
                 SchemaDefinition.Types.UUID,
                 null,
-                (source) -> source.getExternalId(),
+                (source) -> source.getName(),
                 null,
                 REQUIRED, NOT_CREATABLE, NOT_UPDATEABLE
         );

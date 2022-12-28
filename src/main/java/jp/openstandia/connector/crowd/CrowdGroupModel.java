@@ -2,6 +2,7 @@ package jp.openstandia.connector.crowd;
 
 import com.atlassian.crowd.integration.rest.entity.GroupEntity;
 import com.atlassian.crowd.integration.rest.entity.MultiValuedAttributeEntity;
+import com.atlassian.crowd.model.group.GroupType;
 import com.atlassian.crowd.model.group.ImmutableGroupWithAttributes;
 
 import java.util.*;
@@ -33,7 +34,7 @@ public class CrowdGroupModel {
     }
 
     public static CrowdGroupModel create() {
-        return new CrowdGroupModel(ImmutableGroupWithAttributes.builder(GroupEntity.newMinimalInstance("")));
+        return new CrowdGroupModel(ImmutableGroupWithAttributes.builder(GroupEntity.newMinimalInstance("")).setType(GroupType.GROUP));
     }
 
     public ImmutableGroupWithAttributes toGroup() {
