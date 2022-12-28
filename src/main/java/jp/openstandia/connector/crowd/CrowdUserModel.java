@@ -66,7 +66,7 @@ public class CrowdUserModel {
     }
 
     public ImmutableUserWithAttributes toUser() {
-        if (this.createAttributes != null && !this.currentAttributes.isEmpty()) {
+        if (this.createAttributes != null && !this.createAttributes.isEmpty()) {
             this.user.setAttributes(this.createAttributes);
         }
         return this.user.build();
@@ -107,8 +107,16 @@ public class CrowdUserModel {
         this.password = gs;
     }
 
-    // For create/update single attribute
-    public void replaceAttribute(String key, String value) {
+    // For create single attribute
+    public void createAttribute(String attrName, String value) {
+        if (this.createAttributes == null) {
+            this.createAttributes = HashMultimap.create();
+        }
+        this.createAttributes.put(attrName, value);
+    }
+
+    // For update single attribute
+    public void replaceAttribute(String attrName, String value) {
         this.hasAttributesChange = true;
         if (this.updateAttributes == null) {
             this.updateAttributes = new HashMap<>();
@@ -119,11 +127,11 @@ public class CrowdUserModel {
         if (value != null) {
             newValue.add(value);
         }
-        this.updateAttributes.put(key, newValue);
+        this.updateAttributes.put(attrName, newValue);
     }
 
     // For create multiple attribute
-    public void setAttributes(String attrName, List<String> values) {
+    public void createAttributes(String attrName, List<String> values) {
         if (this.createAttributes == null) {
             this.createAttributes = HashMultimap.create();
         }
@@ -131,7 +139,7 @@ public class CrowdUserModel {
     }
 
     // For update(ADD) multiple attribute
-    public void addAttributes(String key, List<String> values) {
+    public void addAttributes(String attrName, List<String> values) {
         this.hasAttributesChange = true;
         if (updateAttributes == null) {
             this.updateAttributes = new HashMap<>();
@@ -139,18 +147,18 @@ public class CrowdUserModel {
 
         Set<String> current = null;
         if (this.currentAttributes != null) {
-            current = this.currentAttributes.get(key);
+            current = this.currentAttributes.get(attrName);
         }
         if (current == null) {
             current = new HashSet<>(values.size());
         }
         current.addAll(values);
 
-        this.updateAttributes.put(key, current);
+        this.updateAttributes.put(attrName, current);
     }
 
     // For update(DEL) multiple attribute
-    public void removeAttributes(String key, List<String> values) {
+    public void removeAttributes(String attrName, List<String> values) {
         this.hasAttributesChange = true;
         if (updateAttributes == null) {
             this.updateAttributes = new HashMap<>();
@@ -158,7 +166,7 @@ public class CrowdUserModel {
 
         Set<String> current = null;
         if (this.currentAttributes != null) {
-            current = this.currentAttributes.get(key);
+            current = this.currentAttributes.get(attrName);
         }
         if (current == null) {
             current = Collections.emptySet();
@@ -167,7 +175,7 @@ public class CrowdUserModel {
         current.removeAll(values);
 
         // Empty set will clear the attribute
-        this.updateAttributes.put(key, current);
+        this.updateAttributes.put(attrName, current);
     }
 
     public void setGroups(List<String> groups) {

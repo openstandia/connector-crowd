@@ -24,8 +24,7 @@ import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -65,6 +64,10 @@ public abstract class AbstractTest {
 
     protected <T> List<T> list(T... s) {
         return Arrays.stream(s).collect(Collectors.toList());
+    }
+
+    protected <T> Set<T> asSet(Collection<T> c) {
+        return new HashSet<>(c);
     }
 
     protected String toPlain(GuardedString gs) {

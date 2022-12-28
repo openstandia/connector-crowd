@@ -133,6 +133,7 @@ public class CrowdUserHandler implements ObjectHandler {
                     if (!attrType.endsWith("array")) {
                         sb.add("attributes." + attrName,
                                 SchemaDefinition.Types.STRING,
+                                (source, dest) -> dest.createAttribute(attrName, source),
                                 (source, dest) -> dest.replaceAttribute(attrName, source),
                                 (source) -> source.getAttributes().getValue(attrName),
                                 null
@@ -140,7 +141,7 @@ public class CrowdUserHandler implements ObjectHandler {
                     } else {
                         sb.addAsMultiple("attributes." + attrName,
                                 SchemaDefinition.Types.STRING,
-                                (source, dest) -> dest.setAttributes(attrName, source),
+                                (source, dest) -> dest.createAttributes(attrName, source),
                                 (source, dest) -> dest.addAttributes(attrName, source),
                                 (source, dest) -> dest.removeAttributes(attrName, source),
                                 (source) -> {
@@ -232,7 +233,7 @@ public class CrowdUserHandler implements ObjectHandler {
             client.deleteUserFromGroup(current.getName(), dest.removeGroups);
         }
         if (dest.hasUsernameChange) {
-            client.updateUsername(current.getName(), dest.newUserName);
+            client.renameUser(current.getName(), dest.newUserName);
         }
 
         return null;

@@ -115,20 +115,20 @@ public class SchemaDefinition {
             this.attributes.add(attr);
         }
 
-//        public <T> void add(String name,
-//                            Types<T> typeClass,
-//
-//                            BiConsumer<T, C> create,
-//                            BiConsumer<T, U> update,
-//                            Function<R, T> read,
-//
-//                            String fetchField,
-//
-//                            AttributeInfo.Flags... options
-//        ) {
-//            AttributeMapper attr = new AttributeMapper(name, typeClass, create, update, read, fetchField, options);
-//            this.attributes.add(attr);
-//        }
+        public <T> void add(String name,
+                            Types<T> typeClass,
+
+                            BiConsumer<T, C> create,
+                            BiConsumer<T, U> update,
+                            Function<R, T> read,
+
+                            String fetchField,
+
+                            AttributeInfo.Flags... options
+        ) {
+            AttributeMapper attr = new AttributeMapper(name, typeClass, create, update, read, fetchField, options);
+            this.attributes.add(attr);
+        }
 
         public <T> void add(String name,
                             Types<T> typeClass,

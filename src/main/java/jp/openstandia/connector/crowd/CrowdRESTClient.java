@@ -179,9 +179,9 @@ public class CrowdRESTClient {
         });
     }
 
-    public void updateUsername(String userName, String newUsername) {
+    public void renameUser(String userName, String newUserName) {
         try {
-            this.crowdClient.renameUser(userName, newUsername);
+            this.crowdClient.renameUser(userName, newUserName);
         } catch (Exception e) {
             throw handleException(e);
         }

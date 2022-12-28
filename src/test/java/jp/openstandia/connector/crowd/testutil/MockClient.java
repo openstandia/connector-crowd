@@ -17,6 +17,7 @@ package jp.openstandia.connector.crowd.testutil;
 
 import com.atlassian.crowd.integration.rest.entity.UserEntity;
 import com.atlassian.crowd.model.group.GroupWithAttributes;
+import com.atlassian.crowd.model.user.User;
 import com.atlassian.crowd.model.user.UserWithAttributes;
 import jp.openstandia.connector.crowd.CrowdQueryHandler;
 import jp.openstandia.connector.crowd.CrowdRESTClient;
@@ -27,6 +28,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MockClient extends CrowdRESTClient {
@@ -34,7 +36,14 @@ public class MockClient extends CrowdRESTClient {
     private static final MockClient INSTANCE = new MockClient();
 
     public MockBiFunction<UserWithAttributes, GuardedString, Uid> createUser;
+    public MockConsumer<User> updateUser;
+    public MockBiConsumer<String, Map<String, Set<String>>> updateUserAttributes;
+    public MockBiConsumer<String, GuardedString> updatePassword;
     public MockBiConsumer<String, List<String>> addUserToGroup;
+    public MockBiConsumer<String, List<String>> deleteUserFromGroup;
+    public MockBiConsumer<String, String> renameUser;
+    public MockFunction<Uid, UserEntity> getUserByUid;
+    public MockFunction<Name, UserEntity> getUserByName;
     public MockFunction<GroupWithAttributes, Uid> createGroup;
     public MockBiConsumer<String, List<String>> addGroupToGroup;
 
@@ -68,18 +77,43 @@ public class MockClient extends CrowdRESTClient {
     }
 
     @Override
+    public void updateUser(User update) {
+        updateUser.accept(update);
+    }
+
+    @Override
+    public void updateUserAttributes(String userName, Map<String, Set<String>> attributes) {
+        updateUserAttributes.accept(userName, attributes);
+    }
+
+    @Override
+    public void updatePassword(String userName, GuardedString password) {
+        updatePassword.accept(userName, password);
+    }
+
+    @Override
     public void addUserToGroup(String userName, List<String> groups) throws AlreadyExistsException {
         addUserToGroup.accept(userName, groups);
     }
 
     @Override
+    public void deleteUserFromGroup(String userName, List<String> groups) throws AlreadyExistsException {
+        deleteUserFromGroup.accept(userName, groups);
+    }
+
+    @Override
+    public void renameUser(String userName, String newUserName) {
+        renameUser.accept(userName, newUserName);
+    }
+
+    @Override
     public UserEntity getUser(Uid uid, OperationOptions options, Set<String> fetchFieldsSet) {
-        return null;
+        return getUserByUid.apply(uid);
     }
 
     @Override
     public UserEntity getUser(Name name, OperationOptions options, Set<String> fetchFieldsSet) {
-        return null;
+        return getUserByName.apply(name);
     }
 
     @Override
