@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static jp.openstandia.connector.util.Utils.toZoneDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest extends AbstractTest {
@@ -237,15 +238,13 @@ class UserTest extends AbstractTest {
     @Test
     void updateUserGroups() {
         // Given
-        String currentUserName = "hoge";
+        String currentUserName = "foo";
 
         String key = "12345:abc";
-        String userName = "foo";
         List<String> addGroups = list("group1", "group2");
         List<String> delGroups = list("group3", "group4");
 
         Set<AttributeDelta> modifications = new HashSet<>();
-        modifications.add(AttributeDeltaBuilder.build(Name.NAME, userName));
         modifications.add(AttributeDeltaBuilder.build("groups", addGroups, delGroups));
 
         AtomicReference<Uid> targetUid = new AtomicReference<>();
@@ -269,7 +268,7 @@ class UserTest extends AbstractTest {
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
@@ -329,9 +328,12 @@ class UserTest extends AbstractTest {
         assertEquals(firstName, singleAttr(result, "first-name"));
         assertEquals(lastName, singleAttr(result, "last-name"));
         assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
+        assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
         assertNull(targetUserName.get());
         assertNull(targetPageSize.get());
+
     }
 
     @Test
@@ -381,6 +383,8 @@ class UserTest extends AbstractTest {
         assertEquals(firstName, singleAttr(result, "first-name"));
         assertEquals(lastName, singleAttr(result, "last-name"));
         assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
+        assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
         assertNull(targetUserName.get());
         assertNull(targetPageSize.get());
@@ -433,6 +437,8 @@ class UserTest extends AbstractTest {
         assertEquals(firstName, singleAttr(result, "first-name"));
         assertEquals(lastName, singleAttr(result, "last-name"));
         assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
+        assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertEquals(groups, multiAttr(result, "groups"));
         assertEquals(userName, targetUserName.get());
         assertEquals(50, targetPageSize.get(), "Not default page size in the configuration");
@@ -482,6 +488,8 @@ class UserTest extends AbstractTest {
         assertEquals(firstName, singleAttr(result, "first-name"));
         assertEquals(lastName, singleAttr(result, "last-name"));
         assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
+        assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
     }
 
@@ -530,6 +538,8 @@ class UserTest extends AbstractTest {
         assertEquals(firstName, singleAttr(result, "first-name"));
         assertEquals(lastName, singleAttr(result, "last-name"));
         assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
+        assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertTrue(isIncompleteAttribute(result.getAttributeByName("groups")));
     }
 
@@ -568,7 +578,7 @@ class UserTest extends AbstractTest {
             results.add(connectorObject);
             return true;
         };
-        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation());
+        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
 
         // Then
         assertEquals(1, results.size());
@@ -581,6 +591,8 @@ class UserTest extends AbstractTest {
         assertEquals(firstName, singleAttr(result, "first-name"));
         assertEquals(lastName, singleAttr(result, "last-name"));
         assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
+        assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
     }
 

@@ -33,7 +33,7 @@ import java.util.Set;
 
 public class MockClient extends CrowdRESTClient {
 
-    private static final MockClient INSTANCE = new MockClient();
+    private static MockClient INSTANCE = new MockClient();
 
     public MockBiFunction<UserWithAttributes, GuardedString, Uid> createUser;
     public MockConsumer<User> updateUser;
@@ -53,7 +53,7 @@ public class MockClient extends CrowdRESTClient {
     public boolean closed = false;
 
     public void init() {
-        closed = false;
+        INSTANCE = new MockClient();
     }
 
     private MockClient() {
@@ -70,6 +70,7 @@ public class MockClient extends CrowdRESTClient {
 
     @Override
     public void close() {
+        closed = true;
     }
 
     // User

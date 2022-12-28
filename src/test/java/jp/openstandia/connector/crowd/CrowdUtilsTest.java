@@ -74,7 +74,11 @@ class CrowdUtilsTest {
 
         OperationOptions noOptions = new OperationOptionsBuilder().build();
         Map<String, String> fullAttributesToGet = Utils.createFullAttributesToGet(schemaDefinition, noOptions);
-        assertEquals(0, fullAttributesToGet.size());
+        assertEquals(2, fullAttributesToGet.size());
+        assertTrue(fullAttributesToGet.containsKey(Uid.NAME));
+        assertTrue(fullAttributesToGet.containsKey(Name.NAME));
+        assertEquals("key", fullAttributesToGet.get(Uid.NAME));
+        assertEquals("name", fullAttributesToGet.get(Name.NAME));
 
         OperationOptions returnDefaultAttributes = new OperationOptionsBuilder().setReturnDefaultAttributes(true).build();
         fullAttributesToGet = Utils.createFullAttributesToGet(schemaDefinition, returnDefaultAttributes);
@@ -93,5 +97,10 @@ class CrowdUtilsTest {
         assertEquals("key", fullAttributesToGet.get(Uid.NAME));
         assertEquals("name", fullAttributesToGet.get(Name.NAME));
         assertEquals("groups", fullAttributesToGet.get("groups"));
+
+        OperationOptions returnDefaultAttributesPlusGetAttr = new OperationOptionsBuilder().setAttributesToGet("groups").build();
+        fullAttributesToGet = Utils.createFullAttributesToGet(schemaDefinition, returnDefaultAttributesPlusGetAttr);
+        assertEquals(1, fullAttributesToGet.size());
+        assertTrue(fullAttributesToGet.containsKey("groups"));
     }
 }

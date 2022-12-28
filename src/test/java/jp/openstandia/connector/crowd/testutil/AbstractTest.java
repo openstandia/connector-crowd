@@ -23,6 +23,7 @@ import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.test.common.TestHelpers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -55,10 +56,16 @@ public abstract class AbstractTest {
 
     @BeforeEach
     void before() {
+        MockClient.instance().init();
+
         this.configuration = newConfiguration();
         this.connector = newFacade(this.configuration);
         this.mockClient = MockClient.instance();
-        this.mockClient.init();
+    }
+
+    @AfterEach
+    void after() {
+        this.connector.dispose();
     }
 
     // Utilities
