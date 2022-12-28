@@ -237,33 +237,33 @@ public class CrowdRESTClient {
     }
 
     // User-Group
-    public void addUserToGroup(String username, List<String> groups) throws AlreadyExistsException {
+    public void addUserToGroup(String userName, List<String> groups) throws AlreadyExistsException {
         try {
             for (String group : groups) {
-                this.crowdClient.addUserToGroup(username, group);
+                this.crowdClient.addUserToGroup(userName, group);
             }
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
-    public void deleteUserFromGroup(String username, List<String> groups) throws AlreadyExistsException {
+    public void deleteUserFromGroup(String userName, List<String> groups) throws AlreadyExistsException {
         try {
             for (String group : groups) {
-                this.crowdClient.removeUserFromGroup(username, group);
+                this.crowdClient.removeUserFromGroup(userName, group);
             }
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
-    public List<String> getGroupsForUser(String username, int pageSize) {
+    public List<String> getGroupsForUser(String userName, int pageSize) {
         // Crowd starts from 0
         int start = 0;
         List<String> results = new ArrayList<>();
         try {
             while (true) {
-                List<String> groups = this.crowdClient.getNamesOfGroupsForUser(username, start, pageSize);
+                List<String> groups = this.crowdClient.getNamesOfGroupsForUser(userName, start, pageSize);
 
                 if (groups.size() == 0) {
                     // End of the page

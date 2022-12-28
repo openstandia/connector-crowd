@@ -16,6 +16,7 @@
 package jp.openstandia.connector.crowd.testutil;
 
 import com.atlassian.crowd.integration.rest.entity.UserEntity;
+import com.atlassian.crowd.model.group.GroupWithAttributes;
 import com.atlassian.crowd.model.user.UserWithAttributes;
 import jp.openstandia.connector.crowd.CrowdQueryHandler;
 import jp.openstandia.connector.crowd.CrowdRESTClient;
@@ -25,11 +26,17 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 
+import java.util.List;
 import java.util.Set;
 
 public class MockClient extends CrowdRESTClient {
 
     private static final MockClient INSTANCE = new MockClient();
+
+    public MockBiFunction<UserWithAttributes, GuardedString, Uid> createUser;
+    public MockBiConsumer<String, List<String>> addUserToGroup;
+    public MockFunction<GroupWithAttributes, Uid> createGroup;
+    public MockBiConsumer<String, List<String>> addGroupToGroup;
 
     public boolean closed = false;
 
@@ -53,9 +60,16 @@ public class MockClient extends CrowdRESTClient {
     public void close() {
     }
 
+    // User
+
     @Override
     public Uid createUser(UserWithAttributes user, GuardedString password) throws AlreadyExistsException {
-        return null;
+        return createUser.apply(user, password);
+    }
+
+    @Override
+    public void addUserToGroup(String userName, List<String> groups) throws AlreadyExistsException {
+        addUserToGroup.accept(userName, groups);
     }
 
     @Override
@@ -71,5 +85,37 @@ public class MockClient extends CrowdRESTClient {
     @Override
     public int getUsers(CrowdQueryHandler<UserEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
         return 0;
+    }
+
+    // Group
+
+    @Override
+    public Uid createGroup(GroupWithAttributes group) throws AlreadyExistsException {
+        return createGroup.apply(group);
+    }
+
+    @Override
+    public void addGroupToGroup(String groupName, List<String> groups) throws AlreadyExistsException {
+        addGroupToGroup.accept(groupName, groups);
+    }
+
+    @FunctionalInterface
+    public interface MockFunction<T, R> {
+        R apply(T t);
+    }
+
+    @FunctionalInterface
+    public interface MockBiFunction<T, U, R> {
+        R apply(T t, U u);
+    }
+
+    @FunctionalInterface
+    public interface MockConsumer<T> {
+        void accept(T t);
+    }
+
+    @FunctionalInterface
+    public interface MockBiConsumer<T, U> {
+        void accept(T t, U u);
     }
 }

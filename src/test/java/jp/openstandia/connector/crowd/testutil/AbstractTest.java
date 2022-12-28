@@ -20,12 +20,19 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
+import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.jupiter.api.BeforeEach;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public abstract class AbstractTest {
 
     protected ConnectorFacade connector;
+    protected CrowdConfiguration configuration;
     protected MockClient mockClient;
 
     protected CrowdConfiguration newConfiguration() {
@@ -36,9 +43,9 @@ public abstract class AbstractTest {
         return conf;
     }
 
-    protected ConnectorFacade newFacade() {
+    protected ConnectorFacade newFacade(Configuration configuration) {
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
-        APIConfiguration impl = TestHelpers.createTestConfiguration(LocalCrowdConnector.class, newConfiguration());
+        APIConfiguration impl = TestHelpers.createTestConfiguration(LocalCrowdConnector.class, configuration);
         impl.getResultsHandlerConfiguration().setEnableAttributesToGetSearchResultsHandler(false);
         impl.getResultsHandlerConfiguration().setEnableNormalizingResultsHandler(false);
         impl.getResultsHandlerConfiguration().setEnableFilteredResultsHandler(false);
@@ -47,8 +54,24 @@ public abstract class AbstractTest {
 
     @BeforeEach
     void before() {
-        connector = newFacade();
-        mockClient = MockClient.instance();
-        mockClient.init();
+        this.configuration = newConfiguration();
+        this.connector = newFacade(this.configuration);
+        this.mockClient = MockClient.instance();
+        this.mockClient.init();
+    }
+
+    // Utilities
+
+
+    protected <T> List<T> list(T... s) {
+        return Arrays.stream(s).collect(Collectors.toList());
+    }
+
+    protected String toPlain(GuardedString gs) {
+        AtomicReference<String> plain = new AtomicReference<>();
+        gs.access(c -> {
+            plain.set(String.valueOf(c));
+        });
+        return plain.get();
     }
 }
