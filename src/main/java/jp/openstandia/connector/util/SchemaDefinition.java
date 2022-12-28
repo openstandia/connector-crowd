@@ -665,6 +665,14 @@ public class SchemaDefinition {
                     ZonedDateTime date = (ZonedDateTime) AttributeDeltaUtil.getSingleValue(source);
                     String formatted = formatDateTime(date);
                     replace.accept((T) formatted, dest);
+
+                } else if (type == Types.GUARDED_STRING) {
+                    GuardedString guardedString = AttributeDeltaUtil.getGuardedStringValue(source);
+                    replace.accept((T) guardedString, dest);
+
+                } else {
+                    T value = (T) AttributeDeltaUtil.getSingleValue(source);
+                    replace.accept(value, dest);
                 }
             }
         }

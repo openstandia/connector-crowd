@@ -80,6 +80,7 @@ public class CrowdRESTClient {
 
     protected ConnectorException handleException(CrowdException e) {
         int statusCode = ExceptionUtil.getStatusCode(e);
+
         if (e instanceof InvalidAuthenticationException) {
             return new ConnectionFailedException(e);
         }
