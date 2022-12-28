@@ -20,7 +20,7 @@ import org.identityconnectors.framework.common.objects.*;
 import java.util.Set;
 
 /**
- * Provides utility methods
+ * Define handler methods for connector operations.
  *
  * @author Hiroyuki Wada
  */
