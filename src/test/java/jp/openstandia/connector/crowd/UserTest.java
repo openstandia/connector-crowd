@@ -22,13 +22,11 @@ import jp.openstandia.connector.crowd.testutil.AbstractTest;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -376,6 +374,152 @@ class UserTest extends AbstractTest {
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
         assertNull(targetUserName.get());
         assertNull(targetPageSize.get());
+    }
+
+    @Test
+    void getUserByName() {
+        // Given
+        String key = "12345:abc";
+        String userName = "foo";
+        String email = "foo@example.com";
+        String displayName = "Foo Bar";
+        String firstName = "Foo";
+        String lastName = "Bar";
+        boolean active = true;
+        Date createdDate = Date.from(Instant.now());
+        Date updatedDate = Date.from(Instant.now());
+
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name(userName));
+        attrs.add(AttributeBuilder.buildEnabled(false));
+
+        AtomicReference<Name> targetName = new AtomicReference<>();
+        mockClient.getUserByName = ((u) -> {
+            targetName.set(u);
+
+            UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
+            return result;
+        });
+
+        // When
+        List<ConnectorObject> results = new ArrayList<>();
+        ResultsHandler handler = connectorObject -> {
+            results.add(connectorObject);
+            return true;
+        };
+        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation());
+
+        // Then
+        assertEquals(1, results.size());
+        ConnectorObject result = results.get(0);
+        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(key, result.getUid().getUidValue());
+        assertEquals(userName, result.getName().getNameValue());
+        assertEquals(email, singleAttr(result, "email"));
+        assertEquals(displayName, singleAttr(result, "display-name"));
+        assertEquals(firstName, singleAttr(result, "first-name"));
+        assertEquals(lastName, singleAttr(result, "last-name"));
+        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
+    }
+
+    @Test
+    void getUserByNameWithGroups() {
+        // Given
+        String key = "12345:abc";
+        String userName = "foo";
+        String email = "foo@example.com";
+        String displayName = "Foo Bar";
+        String firstName = "Foo";
+        String lastName = "Bar";
+        boolean active = true;
+        Date createdDate = Date.from(Instant.now());
+        Date updatedDate = Date.from(Instant.now());
+        List<String> groups = list("group1", "group2");
+
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name(userName));
+        attrs.add(AttributeBuilder.buildEnabled(false));
+
+        AtomicReference<Name> targetName = new AtomicReference<>();
+        mockClient.getUserByName = ((u) -> {
+            targetName.set(u);
+
+            UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
+            return result;
+        });
+
+        // When
+        List<ConnectorObject> results = new ArrayList<>();
+        ResultsHandler handler = connectorObject -> {
+            results.add(connectorObject);
+            return true;
+        };
+        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation("groups"));
+
+        // Then
+        assertEquals(1, results.size());
+        ConnectorObject result = results.get(0);
+        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(key, result.getUid().getUidValue());
+        assertEquals(userName, result.getName().getNameValue());
+        assertEquals(email, singleAttr(result, "email"));
+        assertEquals(displayName, singleAttr(result, "display-name"));
+        assertEquals(firstName, singleAttr(result, "first-name"));
+        assertEquals(lastName, singleAttr(result, "last-name"));
+        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertTrue(isIncompleteAttribute(result.getAttributeByName("groups")));
+    }
+
+    @Test
+    void getUsers() {
+        // Given
+        String key = "12345:abc";
+        String userName = "foo";
+        String email = "foo@example.com";
+        String displayName = "Foo Bar";
+        String firstName = "Foo";
+        String lastName = "Bar";
+        boolean active = true;
+        Date createdDate = Date.from(Instant.now());
+        Date updatedDate = Date.from(Instant.now());
+
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name(userName));
+        attrs.add(AttributeBuilder.buildEnabled(false));
+
+        AtomicReference<Integer> targetPageSize = new AtomicReference<>();
+        AtomicReference<Integer> targetOffset = new AtomicReference<>();
+        mockClient.getUsers = ((h, size, offset) -> {
+            targetPageSize.set(size);
+            targetOffset.set(offset);
+
+            UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
+            h.handle(result);
+
+            return 1;
+        });
+
+        // When
+        List<ConnectorObject> results = new ArrayList<>();
+        ResultsHandler handler = connectorObject -> {
+            results.add(connectorObject);
+            return true;
+        };
+        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation());
+
+        // Then
+        assertEquals(1, results.size());
+        ConnectorObject result = results.get(0);
+        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(key, result.getUid().getUidValue());
+        assertEquals(userName, result.getName().getNameValue());
+        assertEquals(email, singleAttr(result, "email"));
+        assertEquals(displayName, singleAttr(result, "display-name"));
+        assertEquals(firstName, singleAttr(result, "first-name"));
+        assertEquals(lastName, singleAttr(result, "last-name"));
+        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
     }
 
     @Test

@@ -243,6 +243,7 @@ public class SchemaDefinition {
     // Key: attribute name (for connector. e.g. __NAME__)
     // Value: field name for resource fetching
     private final Map<String, String> returnedByDefaultAttributesSet;
+    private final Map<String, String> notReadableAttributesSet;
 
     public SchemaDefinition(ObjectClass objectClass, ObjectClassInfo objectClassInfo, Map<String, AttributeMapper> attributeMap) {
         this.objectClass = objectClass;
@@ -250,6 +251,10 @@ public class SchemaDefinition {
         this.attributeMap = attributeMap;
         this.returnedByDefaultAttributesSet = getObjectClassInfo().getAttributeInfo().stream()
                 .filter(i -> i.isReturnedByDefault())
+                .map(i -> i.getName())
+                .collect(Collectors.toMap(n -> n, n -> attributeMap.get(n).fetchField));
+        this.notReadableAttributesSet = getObjectClassInfo().getAttributeInfo().stream()
+                .filter(i -> !i.isReadable())
                 .map(i -> i.getName())
                 .collect(Collectors.toMap(n -> n, n -> attributeMap.get(n).fetchField));
     }
@@ -260,6 +265,14 @@ public class SchemaDefinition {
 
     public Map<String, String> getReturnedByDefaultAttributesSet() {
         return returnedByDefaultAttributesSet;
+    }
+
+    public boolean isReturnedByDefaultAttribute(String attrName) {
+        return returnedByDefaultAttributesSet.containsKey(attrName);
+    }
+
+    public boolean isReadableAttributes(String attrName) {
+        return !notReadableAttributesSet.containsKey(attrName);
     }
 
     public String getFetchField(String name) {
@@ -308,10 +321,13 @@ public class SchemaDefinition {
         addAttribute(builder, name.apply(source));
 
         for (Map.Entry<String, AttributeMapper> entry : attributeMap.entrySet()) {
-            // When requested partial attribute values, return incomplete attribute if the attribute is not returned by default
-            if (allowPartialAttributeValues && !getReturnedByDefaultAttributesSet().containsKey(entry.getKey())) {
-                addAttribute(builder, createIncompleteAttribute(entry.getKey()));
-                continue;
+            // When requested partial attribute values, return incomplete attribute if the attribute is not returned by default and readable
+            if (allowPartialAttributeValues) {
+                if (!isReturnedByDefaultAttribute(entry.getKey()) && isReadableAttributes(entry.getKey())
+                        && attributesToGet.contains(entry.getKey())) {
+                    addAttribute(builder, createIncompleteAttribute(entry.getKey()));
+                    continue;
+                }
             }
             if (shouldReturn(attributesToGet, entry.getKey())) {
                 Attribute value = entry.getValue().apply(source);

@@ -63,7 +63,6 @@ public abstract class AbstractTest {
 
     // Utilities
 
-
     protected <T> List<T> list(T... s) {
         return Arrays.stream(s).collect(Collectors.toList());
     }
@@ -128,5 +127,12 @@ public abstract class AbstractTest {
             Assertions.fail(attrName + " is not multiple value: " + value);
         }
         return value;
+    }
+
+    protected boolean isIncompleteAttribute(Attribute attr) {
+        if (attr == null) {
+            return false;
+        }
+        return attr.getAttributeValueCompleteness().equals(AttributeValueCompleteness.INCOMPLETE);
     }
 }
