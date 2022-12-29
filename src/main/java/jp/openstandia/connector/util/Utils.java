@@ -35,11 +35,17 @@ public class Utils {
     private static final Log LOG = Log.getLog(Utils.class);
 
     public static ZonedDateTime toZoneDateTime(String yyyymmdd) {
+        if (yyyymmdd == null) {
+            return null;
+        }
         LocalDate date = LocalDate.parse(yyyymmdd);
         return date.atStartOfDay(ZoneId.systemDefault());
     }
 
     public static ZonedDateTime toZoneDateTime(Date date) {
+        if (date == null) {
+            return null;
+        }
         ZoneId zone = ZoneId.systemDefault();
         return ZonedDateTime.ofInstant(date.toInstant(), zone);
     }

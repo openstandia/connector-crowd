@@ -700,10 +700,15 @@ public class SchemaDefinition {
 
             Object value = read.apply(source);
             if (value == null) {
+                // Don't make attribute if no value
                 return null;
             }
 
             if (isMultiple) {
+                if (((List<?>) value).isEmpty()) {
+                    // Don't make attribute if no values
+                    return null;
+                }
                 if (type == Types.DATE_STRING) {
                     List<ZonedDateTime> values = ((List<?>) value).stream()
                             .map(v -> (String) v)

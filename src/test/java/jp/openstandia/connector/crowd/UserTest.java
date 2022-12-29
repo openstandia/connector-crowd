@@ -15,6 +15,8 @@
  */
 package jp.openstandia.connector.crowd;
 
+import com.atlassian.crowd.integration.rest.entity.MultiValuedAttributeEntity;
+import com.atlassian.crowd.integration.rest.entity.MultiValuedAttributeEntityList;
 import com.atlassian.crowd.integration.rest.entity.UserEntity;
 import com.atlassian.crowd.model.user.User;
 import com.atlassian.crowd.model.user.UserWithAttributes;
@@ -266,7 +268,7 @@ class UserTest extends AbstractTest {
     }
 
     @Test
-    void updateUserWithAttributes() {
+    void updateUserWithAttributesAdd() {
         // Apply custom configuration for this test
         configuration.setUserAttributesSchema(new String[]{"custom1$string", "custom2$stringArray"});
         ConnectorFacade connector = newFacade(configuration);
@@ -309,6 +311,57 @@ class UserTest extends AbstractTest {
         Map<String, Set<String>> updatedAttrs = newAttrs.get();
         assertEquals(set(custom1), updatedAttrs.get("custom1"));
         assertEquals(asSet(custom2), updatedAttrs.get("custom2"));
+    }
+
+    @Test
+    void updateUserWithAttributesUpdate() {
+        // Apply custom configuration for this test
+        configuration.setUserAttributesSchema(new String[]{"custom1$string", "custom2$stringArray"});
+        ConnectorFacade connector = newFacade(configuration);
+
+        // Given
+        String currentUserName = "foo";
+
+        String key = "12345:abc";
+        String custom1 = "abc";
+        List<String> custom2Add = list("789");
+        List<String> custom2Remove = list("123");
+
+        Set<AttributeDelta> modifications = new HashSet<>();
+        modifications.add(AttributeDeltaBuilder.build("attributes.custom1", custom1));
+        modifications.add(AttributeDeltaBuilder.build("attributes.custom2", custom2Add, custom2Remove));
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
+
+            UserEntity current = UserEntity.newMinimalInstance(currentUserName);
+            List<MultiValuedAttributeEntity> attrs = new ArrayList<>();
+            attrs.add(new MultiValuedAttributeEntity("custom1", list("xyz")));
+            attrs.add(new MultiValuedAttributeEntity("custom2", list("123", "456")));
+            current.setAttributes(new MultiValuedAttributeEntityList(attrs));
+            return current;
+        });
+        AtomicReference<String> targetUserName1 = new AtomicReference<>();
+        AtomicReference<Map<String, Set<String>>> newAttrs = new AtomicReference<>();
+        mockClient.updateUserAttributes = ((u, a) -> {
+            targetUserName1.set(u);
+            newAttrs.set(a);
+        });
+
+        // When
+        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+
+        // Then
+        assertNull(affected);
+
+        assertEquals(key, targetUid.get().getUidValue());
+
+        assertEquals(currentUserName, targetUserName1.get());
+        assertNotNull(newAttrs.get());
+        Map<String, Set<String>> updatedAttrs = newAttrs.get();
+        assertEquals(set(custom1), updatedAttrs.get("custom1"));
+        assertEquals(set("456", "789"), updatedAttrs.get("custom2"));
     }
 
     @Test
@@ -437,6 +490,83 @@ class UserTest extends AbstractTest {
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
         assertNull(targetUserName.get());
         assertNull(targetPageSize.get());
+    }
+
+    @Test
+    void getUserByUidWithAttributes() {
+        // Apply custom configuration for this test
+        configuration.setUserAttributesSchema(new String[]{"custom1$string", "custom2$stringArray"});
+        ConnectorFacade connector = newFacade(configuration);
+
+        // Given
+        String key = "12345:abc";
+        String userName = "foo";
+        String custom1 = "abc";
+        boolean active = true;
+        List<String> custom2 = list("123", "456");
+
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name(userName));
+        attrs.add(AttributeBuilder.buildEnabled(false));
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
+
+            UserEntity result = new UserEntity(userName, null, null, null, null, null, active, key, null, null, false);
+            List<MultiValuedAttributeEntity> customAttrs = new ArrayList<>();
+            customAttrs.add(new MultiValuedAttributeEntity("custom1", list(custom1)));
+            customAttrs.add(new MultiValuedAttributeEntity("custom2", custom2));
+            result.setAttributes(new MultiValuedAttributeEntityList(customAttrs));
+            return result;
+        });
+
+        // When
+        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
+
+        // Then
+        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(key, result.getUid().getUidValue());
+        assertEquals(userName, result.getName().getNameValue());
+        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(custom1, singleAttr(result, "attributes.custom1"));
+        assertEquals(custom2, multiAttr(result, "attributes.custom2"));
+    }
+
+    @Test
+    void getUserByUidWithEmpty() {
+        // Apply custom configuration for this test
+        configuration.setUserAttributesSchema(new String[]{"custom1$string", "custom2$stringArray"});
+        ConnectorFacade connector = newFacade(configuration);
+
+        // Given
+        String key = "12345:abc";
+        String userName = "foo";
+        boolean active = true;
+
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name(userName));
+        attrs.add(AttributeBuilder.buildEnabled(false));
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
+
+            UserEntity result = new UserEntity(userName, null, null, null, null, null, active, key, null, null, false);
+            return result;
+        });
+
+        // When
+        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
+
+        // Then
+        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(key, result.getUid().getUidValue());
+        assertEquals(userName, result.getName().getNameValue());
+        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+
+        Set<Attribute> attributes = result.getAttributes();
+        assertEquals(3, attributes.size());
     }
 
     @Test
