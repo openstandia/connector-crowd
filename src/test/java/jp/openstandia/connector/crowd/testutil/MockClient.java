@@ -50,12 +50,17 @@ public class MockClient extends CrowdRESTClient {
     public MockTripleFunction<CrowdQueryHandler<UserEntity>, Integer, Integer, Integer> getUsers;
     public MockBiFunction<String, Integer, List<String>> getGroupsForUser;
     public MockConsumer<Uid> deleteUser;
+
     public MockFunction<GroupWithAttributes, Uid> createGroup;
     public MockBiConsumer<String, List<String>> addGroupToGroup;
-    public MockBiConsumer<String, List<String>> deleteGroupToGroup;
+    public MockBiConsumer<String, List<String>> deleteGroupFromGroup;
     public MockConsumer<Group> updateGroup;
+    public MockBiConsumer<String, Map<String, Set<String>>> updateGroupAttributes;
     public MockFunction<Uid, GroupEntity> getGroupByUid;
     public MockFunction<Name, GroupEntity> getGroupByName;
+    public MockTripleFunction<CrowdQueryHandler<GroupEntity>, Integer, Integer, Integer> getGroups;
+    public MockBiFunction<String, Integer, List<String>> getGroupsForGroup;
+    public MockConsumer<Uid> deleteGroup;
 
     public boolean closed = false;
 
@@ -156,12 +161,17 @@ public class MockClient extends CrowdRESTClient {
 
     @Override
     public void deleteGroupFromGroup(String groupName, List<String> groups) throws AlreadyExistsException {
-        deleteGroupToGroup.accept(groupName, groups);
+        deleteGroupFromGroup.accept(groupName, groups);
     }
 
     @Override
     public void updateGroup(Group update) {
         updateGroup.accept(update);
+    }
+
+    @Override
+    public void updateGroupAttributes(String groupName, Map<String, Set<String>> attributes) {
+        updateGroupAttributes.accept(groupName, attributes);
     }
 
     @Override
@@ -172,6 +182,21 @@ public class MockClient extends CrowdRESTClient {
     @Override
     public GroupEntity getGroup(Name name, OperationOptions options, Set<String> fetchFieldsSet) {
         return getGroupByName.apply(name);
+    }
+
+    @Override
+    public int getGroups(CrowdQueryHandler<GroupEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
+        return getGroups.apply(handler, pageSize, pageOffset);
+    }
+
+    @Override
+    public List<String> getGroupsForGroup(String groupName, int pageSize) {
+        return getGroupsForGroup.apply(groupName, pageSize);
+    }
+
+    @Override
+    public void deleteGroup(Uid uid) {
+        deleteGroup.accept(uid);
     }
 
     @FunctionalInterface

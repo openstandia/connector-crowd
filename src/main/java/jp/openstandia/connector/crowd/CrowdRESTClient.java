@@ -180,6 +180,17 @@ public class CrowdRESTClient {
         });
     }
 
+    public void updateGroupAttributes(String groupName, Map<String, Set<String>> attributes) {
+        try {
+            // We don't use removeGroupAttributes to reduce API calling.
+            // Instead of it, we pass empty list to remove the attribute.
+            this.crowdClient.storeGroupAttributes(groupName, attributes);
+
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     public void renameUser(String userName, String newUserName) {
         try {
             this.crowdClient.renameUser(userName, newUserName);

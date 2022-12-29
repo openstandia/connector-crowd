@@ -33,6 +33,7 @@ public class CrowdConfiguration extends AbstractConfiguration {
     private int connectionTimeoutInSeconds = 5000;
     private int socketTimeoutInMilliseconds = 600000;
     private String[] userAttributesSchema = new String[]{};
+    private String[] groupAttributesSchema = new String[]{};
 
     @ConfigurationProperty(
             order = 1,
@@ -187,6 +188,21 @@ public class CrowdConfiguration extends AbstractConfiguration {
 
     public void setUserAttributesSchema(String[] userAttributesSchema) {
         this.userAttributesSchema = userAttributesSchema;
+    }
+
+    @ConfigurationProperty(
+            order = 12,
+            displayMessageKey = "Group Attributes Schema",
+            helpMessageKey = "Define schema for group attributes. The format is \"fieldName$dataType\". " +
+                    "The dataType is selected from \"string\", \"stringArray\".",
+            required = false,
+            confidential = false)
+    public String[] getGroupAttributesSchema() {
+        return groupAttributesSchema;
+    }
+
+    public void setGroupAttributesSchema(String[] groupAttributesSchema) {
+        this.groupAttributesSchema = groupAttributesSchema;
     }
 
     @Override

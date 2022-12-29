@@ -66,6 +66,7 @@ public class CrowdUserModel {
     }
 
     public ImmutableUserWithAttributes toUser() {
+        // Create user API can have the attributes
         if (this.createAttributes != null && !this.createAttributes.isEmpty()) {
             this.user.setAttributes(this.createAttributes);
         }

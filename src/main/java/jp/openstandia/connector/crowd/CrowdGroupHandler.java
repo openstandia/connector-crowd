@@ -21,7 +21,11 @@ import jp.openstandia.connector.util.SchemaDefinition;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.identityconnectors.framework.common.objects.AttributeInfo.Flags.*;
 
@@ -30,6 +34,7 @@ public class CrowdGroupHandler implements ObjectHandler {
     public static final ObjectClass GROUP_OBJECT_CLASS = new ObjectClass("group");
 
     private static final Log LOGGER = Log.getLog(CrowdGroupHandler.class);
+    private static final Set<String> SUPPORTED_TYPES = Arrays.asList("string", "stringarray").stream().collect(Collectors.toSet());
 
     private final CrowdConfiguration configuration;
     private final CrowdRESTClient client;
@@ -84,6 +89,41 @@ public class CrowdGroupHandler implements ObjectHandler {
                 null
         );
 
+        // Custom Attributes
+        Arrays.stream(configuration.getGroupAttributesSchema())
+                .map(x -> x.split("\\$"))
+                .filter(x -> x.length == 2)
+                .map(x -> new String[]{x[0], x[1].toLowerCase()})
+                .filter(x -> SUPPORTED_TYPES.contains(x[1]))
+                .forEach(x -> {
+                    String attrName = x[0];
+                    String attrType = x[1];
+
+                    if (!attrType.endsWith("array")) {
+                        sb.add("attributes." + attrName,
+                                SchemaDefinition.Types.STRING,
+                                (source, dest) -> dest.replaceAttribute(attrName, source),
+                                (source) -> source.getAttributes().getValue(attrName),
+                                null
+                        );
+                    } else {
+                        sb.addAsMultiple("attributes." + attrName,
+                                SchemaDefinition.Types.STRING,
+                                (source, dest) -> dest.addAttributes(attrName, source),
+                                (source, dest) -> dest.addAttributes(attrName, source),
+                                (source, dest) -> dest.removeAttributes(attrName, source),
+                                (source) -> {
+                                    Set<String> values = source.getAttributes().getValues(attrName);
+                                    if (values == null) {
+                                        return Collections.emptyList();
+                                    }
+                                    return new ArrayList(values);
+                                },
+                                null
+                        );
+                    }
+                });
+
         // Association
         sb.addAsMultiple("groups",
                 SchemaDefinition.Types.STRING,
@@ -115,6 +155,10 @@ public class CrowdGroupHandler implements ObjectHandler {
         if (mapped.addGroups != null) {
             client.addGroupToGroup(newUid.getNameHintValue(), mapped.addGroups);
         }
+        // We need to call another API to add group attributes
+        if (mapped.hasAttributesChange) {
+            client.updateGroupAttributes(newUid.getNameHintValue(), mapped.updateAttributes);
+        }
 
         return newUid;
     }
@@ -122,7 +166,6 @@ public class CrowdGroupHandler implements ObjectHandler {
     @Override
     public Set<AttributeDelta> updateDelta(Uid uid, Set<AttributeDelta> modifications, OperationOptions options) {
         // To apply the diff, we need to fetch the current object
-
         GroupEntity current = client.getGroup(uid, options, null);
 
         CrowdGroupModel dest = new CrowdGroupModel(current);
@@ -131,6 +174,9 @@ public class CrowdGroupHandler implements ObjectHandler {
 
         if (dest.hasGroupChange) {
             client.updateGroup(dest.toGroup());
+        }
+        if (dest.hasAttributesChange) {
+            client.updateGroupAttributes(current.getName(), dest.updateAttributes);
         }
         if (dest.addGroups != null) {
             client.addGroupToGroup(current.getName(), dest.addGroups);

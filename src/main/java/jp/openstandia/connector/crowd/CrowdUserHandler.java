@@ -120,7 +120,7 @@ public class CrowdUserHandler implements ObjectHandler {
                 null
         );
 
-        // Attributes
+        // Custom Attributes
         Arrays.stream(configuration.getUserAttributesSchema())
                 .map(x -> x.split("\\$"))
                 .filter(x -> x.length == 2)
