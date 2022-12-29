@@ -30,12 +30,6 @@ public class CrowdFilter {
         this.attributeValue = attributeValue;
     }
 
-    public CrowdFilter(String attributeName, FilterType filterType) {
-        this.attributeName = attributeName;
-        this.filterType = filterType;
-        this.attributeValue = null;
-    }
-
     public boolean isByName() {
         return attributeName.equals(Name.NAME) && filterType == FilterType.EXACT_MATCH;
     }

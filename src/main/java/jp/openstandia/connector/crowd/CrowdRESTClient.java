@@ -129,7 +129,7 @@ public class CrowdRESTClient {
         return cred[0];
     }
 
-    public UserEntity getUser(Uid uid, OperationOptions options, Set<String> fetchFieldsSet) {
+    public UserEntity getUser(Uid uid, OperationOptions options, Set<String> fetchFieldsSet) throws UnknownUidException {
         try {
             UserEntity user = (UserEntity) this.executor.getUserByKey(uid.getUidValue());
             return user;
@@ -139,7 +139,7 @@ public class CrowdRESTClient {
         }
     }
 
-    public UserEntity getUser(Name name, OperationOptions options, Set<String> fetchFieldsSet) {
+    public UserEntity getUser(Name name, OperationOptions options, Set<String> fetchFieldsSet) throws UnknownUidException {
         try {
             UserEntity user = (UserEntity) this.crowdClient.getUserWithAttributes(name.getNameValue());
             return user;

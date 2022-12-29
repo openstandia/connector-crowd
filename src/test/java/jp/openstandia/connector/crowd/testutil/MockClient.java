@@ -23,6 +23,7 @@ import jp.openstandia.connector.crowd.CrowdQueryHandler;
 import jp.openstandia.connector.crowd.CrowdRESTClient;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -111,12 +112,12 @@ public class MockClient extends CrowdRESTClient {
     }
 
     @Override
-    public UserEntity getUser(Uid uid, OperationOptions options, Set<String> fetchFieldsSet) {
+    public UserEntity getUser(Uid uid, OperationOptions options, Set<String> fetchFieldsSet) throws UnknownUidException {
         return getUserByUid.apply(uid);
     }
 
     @Override
-    public UserEntity getUser(Name name, OperationOptions options, Set<String> fetchFieldsSet) {
+    public UserEntity getUser(Name name, OperationOptions options, Set<String> fetchFieldsSet) throws UnknownUidException {
         return getUserByName.apply(name);
     }
 

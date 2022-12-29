@@ -210,7 +210,6 @@ public class CrowdUserHandler implements ObjectHandler {
     @Override
     public Set<AttributeDelta> updateDelta(Uid uid, Set<AttributeDelta> modifications, OperationOptions options) {
         // To apply the diff, we need to fetch the current object
-
         UserEntity current = client.getUser(uid, options, null);
 
         CrowdUserModel dest = CrowdUserModel.create(current);
@@ -249,7 +248,6 @@ public class CrowdUserHandler implements ObjectHandler {
                         Set<String> returnAttributesSet, Set<String> fetchFieldsSet,
                         boolean allowPartialAttributeValues, int pageSize, int pageOffset) {
         UserEntity user = client.getUser(uid, options, fetchFieldsSet);
-
 
         if (user != null) {
             resultsHandler.handle(toConnectorObject(schema, user, returnAttributesSet, allowPartialAttributeValues));

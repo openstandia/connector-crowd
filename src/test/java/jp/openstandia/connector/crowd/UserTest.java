@@ -21,6 +21,8 @@ import com.atlassian.crowd.model.user.UserWithAttributes;
 import jp.openstandia.connector.crowd.testutil.AbstractTest;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.junit.jupiter.api.Test;
@@ -156,6 +158,34 @@ class UserTest extends AbstractTest {
     }
 
     @Test
+    void addUserButAlreadyExists() {
+        // Given
+        String userName = "foo";
+        String password = "secret";
+
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name(userName));
+        attrs.add(AttributeBuilder.buildEnabled(true));
+        attrs.add(AttributeBuilder.buildPassword(password.toCharArray()));
+
+        mockClient.createUser = ((user, cred) -> {
+            throw new AlreadyExistsException("");
+        });
+
+        // When
+        Throwable expect = null;
+        try {
+            Uid uid = connector.create(CrowdUserHandler.USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+        } catch (Throwable t) {
+            expect = t;
+        }
+
+        // Then
+        assertNotNull(expect);
+        assertTrue(expect instanceof AlreadyExistsException);
+    }
+
+    @Test
     void updateUser() {
         // Given
         String currentUserName = "hoge";
@@ -236,6 +266,52 @@ class UserTest extends AbstractTest {
     }
 
     @Test
+    void updateUserWithAttributes() {
+        // Apply custom configuration for this test
+        configuration.setUserAttributesSchema(new String[]{"custom1$string", "custom2$stringArray"});
+        ConnectorFacade connector = newFacade(configuration);
+
+        // Given
+        String currentUserName = "foo";
+
+        String key = "12345:abc";
+        String custom1 = "abc";
+        List<String> custom2 = list("123", "456");
+
+        Set<AttributeDelta> modifications = new HashSet<>();
+        modifications.add(AttributeDeltaBuilder.build("attributes.custom1", custom1));
+        modifications.add(AttributeDeltaBuilder.build("attributes.custom2", custom2, null));
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
+
+            UserEntity current = UserEntity.newMinimalInstance(currentUserName);
+            return current;
+        });
+        AtomicReference<String> targetUserName1 = new AtomicReference<>();
+        AtomicReference<Map<String, Set<String>>> newAttrs = new AtomicReference<>();
+        mockClient.updateUserAttributes = ((u, a) -> {
+            targetUserName1.set(u);
+            newAttrs.set(a);
+        });
+
+        // When
+        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+
+        // Then
+        assertNull(affected);
+
+        assertEquals(key, targetUid.get().getUidValue());
+
+        assertEquals(currentUserName, targetUserName1.get());
+        assertNotNull(newAttrs.get());
+        Map<String, Set<String>> updatedAttrs = newAttrs.get();
+        assertEquals(set(custom1), updatedAttrs.get("custom1"));
+        assertEquals(asSet(custom2), updatedAttrs.get("custom2"));
+    }
+
+    @Test
     void updateUserGroups() {
         // Given
         String currentUserName = "foo";
@@ -280,6 +356,34 @@ class UserTest extends AbstractTest {
 
         assertEquals(currentUserName, targetUserName3.get());
         assertEquals(delGroups, targetDelGroups.get());
+    }
+
+    @Test
+    void updateUserButNotFound() {
+        // Given
+        String currentUserName = "foo";
+
+        String key = "12345:abc";
+        String displayName = "Foo Bar";
+
+        Set<AttributeDelta> modifications = new HashSet<>();
+        modifications.add(AttributeDeltaBuilder.build("display-name", displayName));
+
+        mockClient.getUserByUid = ((u) -> {
+            throw new UnknownUidException();
+        });
+
+        // When
+        Throwable expect = null;
+        try {
+            connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+        } catch (Throwable t) {
+            expect = t;
+        }
+
+        // Then
+        assertNotNull(expect);
+        assertTrue(expect instanceof UnknownUidException);
     }
 
     @Test
@@ -333,7 +437,6 @@ class UserTest extends AbstractTest {
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
         assertNull(targetUserName.get());
         assertNull(targetPageSize.get());
-
     }
 
     @Test
@@ -594,6 +697,80 @@ class UserTest extends AbstractTest {
         assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
         assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
+
+        assertEquals(20, targetPageSize.get(), "Not page size in the operation option");
+        assertEquals(1, targetOffset.get());
+    }
+
+    @Test
+    void getUsersZero() {
+        // Given
+        String userName = "foo";
+
+        AtomicReference<Integer> targetPageSize = new AtomicReference<>();
+        AtomicReference<Integer> targetOffset = new AtomicReference<>();
+        mockClient.getUsers = ((h, size, offset) -> {
+            targetPageSize.set(size);
+            targetOffset.set(offset);
+
+            return 0;
+        });
+
+        // When
+        List<ConnectorObject> results = new ArrayList<>();
+        ResultsHandler handler = connectorObject -> {
+            results.add(connectorObject);
+            return true;
+        };
+        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
+
+        // Then
+        assertEquals(0, results.size());
+        assertEquals(20, targetPageSize.get(), "Not default page size in the configuration");
+        assertEquals(1, targetOffset.get());
+    }
+
+    @Test
+    void getUsersTwo() {
+        // Given
+        AtomicReference<Integer> targetPageSize = new AtomicReference<>();
+        AtomicReference<Integer> targetOffset = new AtomicReference<>();
+        mockClient.getUsers = ((h, size, offset) -> {
+            targetPageSize.set(size);
+            targetOffset.set(offset);
+
+            UserEntity result = new UserEntity("user1", null, null, null, null, null, true, "12345:abc", Date.from(Instant.now()), Date.from(Instant.now()), false);
+            h.handle(result);
+
+            result = new UserEntity("user2", null, null, null, null, null, true, "12345:efg", Date.from(Instant.now()), Date.from(Instant.now()), false);
+            h.handle(result);
+
+            return 2;
+        });
+
+        // When
+        List<ConnectorObject> results = new ArrayList<>();
+        ResultsHandler handler = connectorObject -> {
+            results.add(connectorObject);
+            return true;
+        };
+        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
+
+        // Then
+        assertEquals(2, results.size());
+
+        ConnectorObject result = results.get(0);
+        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals("12345:abc", result.getUid().getUidValue());
+        assertEquals("user1", result.getName().getNameValue());
+
+        result = results.get(1);
+        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals("12345:efg", result.getUid().getUidValue());
+        assertEquals("user2", result.getName().getNameValue());
+
+        assertEquals(20, targetPageSize.get(), "Not default page size in the configuration");
+        assertEquals(1, targetOffset.get());
     }
 
     @Test

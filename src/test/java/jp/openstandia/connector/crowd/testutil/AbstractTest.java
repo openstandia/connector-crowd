@@ -65,13 +65,17 @@ public abstract class AbstractTest {
 
     @AfterEach
     void after() {
-        this.connector.dispose();
+        ConnectorFacadeFactory.getInstance().dispose();
     }
 
     // Utilities
 
     protected <T> List<T> list(T... s) {
         return Arrays.stream(s).collect(Collectors.toList());
+    }
+
+    protected <T> Set<T> set(T... s) {
+        return Arrays.stream(s).collect(Collectors.toSet());
     }
 
     protected <T> Set<T> asSet(Collection<T> c) {
