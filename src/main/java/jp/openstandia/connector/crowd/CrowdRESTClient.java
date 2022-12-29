@@ -132,7 +132,7 @@ public class CrowdRESTClient {
 
     public UserEntity getUser(Uid uid, OperationOptions options, Set<String> fetchFieldsSet) throws UnknownUidException {
         try {
-            UserEntity user = (UserEntity) this.executor.getUserByKey(uid.getUidValue());
+            UserEntity user = (UserEntity) this.executor.getUserByKeyWithAttributes(uid.getUidValue());
             return user;
 
         } catch (Exception e) {
@@ -360,7 +360,7 @@ public class CrowdRESTClient {
 
     public GroupEntity getGroup(Uid uid, OperationOptions options, Set<String> fetchFieldsSet) {
         try {
-            GroupEntity group = (GroupEntity) this.crowdClient.getGroup(uid.getUidValue());
+            GroupEntity group = (GroupEntity) this.crowdClient.getGroupWithAttributes(uid.getUidValue());
             return group;
 
         } catch (Exception e) {
@@ -370,7 +370,7 @@ public class CrowdRESTClient {
 
     public GroupEntity getGroup(Name name, OperationOptions options, Set<String> fetchFieldsSet) {
         try {
-            GroupEntity group = (GroupEntity) this.crowdClient.getGroup(name.getNameValue());
+            GroupEntity group = (GroupEntity) this.crowdClient.getGroupWithAttributes(name.getNameValue());
             return group;
 
         } catch (Exception e) {

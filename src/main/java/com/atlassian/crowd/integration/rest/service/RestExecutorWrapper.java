@@ -46,7 +46,7 @@ public class RestExecutorWrapper {
         }
     }
 
-    public User getUserByKey(String key) throws UserNotFoundException, OperationFailedException, ApplicationPermissionException, InvalidAuthenticationException {
+    public User getUserByKeyWithAttributes(String key) throws UserNotFoundException, OperationFailedException, ApplicationPermissionException, InvalidAuthenticationException {
         try {
             // CAUTION: Need to check this API is supported
             // Crowd 5.1.1: OK
