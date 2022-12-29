@@ -365,6 +365,82 @@ class UserTest extends AbstractTest {
     }
 
     @Test
+    void updateUserWithNoValues() {
+        // Apply custom configuration for this test
+        configuration.setUserAttributesSchema(new String[]{"custom1$string", "custom2$stringArray"});
+        ConnectorFacade connector = newFacade(configuration);
+
+        // Given
+        String currentUserName = "foo";
+
+        String key = "12345:abc";
+        String userName = "foo";
+        String email = "foo@example.com";
+        String displayName = "Foo Bar";
+        String firstName = "Foo";
+        String lastName = "Bar";
+        boolean active = true;
+        Date createdDate = Date.from(Instant.now());
+        Date updatedDate = Date.from(Instant.now());
+        String custom1 = "abc";
+        List<String> custom2 = list("123", "789");
+
+        Set<AttributeDelta> modifications = new HashSet<>();
+        // IDM sets empty list to remove the single value
+        modifications.add(AttributeDeltaBuilder.build("display-name", Collections.emptyList()));
+        modifications.add(AttributeDeltaBuilder.build("first-name", Collections.emptyList()));
+        modifications.add(AttributeDeltaBuilder.build("last-name", Collections.emptyList()));
+        modifications.add(AttributeDeltaBuilder.build("attributes.custom1", Collections.emptyList()));
+        modifications.add(AttributeDeltaBuilder.build("attributes.custom2", null, custom2));
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
+
+            UserEntity current = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
+            List<MultiValuedAttributeEntity> attrs = new ArrayList<>();
+            attrs.add(new MultiValuedAttributeEntity("custom1", list(custom1)));
+            attrs.add(new MultiValuedAttributeEntity("custom2", custom2));
+            current.setAttributes(new MultiValuedAttributeEntityList(attrs));
+            return current;
+        });
+        AtomicReference<User> updated = new AtomicReference<>();
+        mockClient.updateUser = ((user) -> {
+            updated.set(user);
+        });
+        AtomicReference<String> targetUserName1 = new AtomicReference<>();
+        AtomicReference<Map<String, Set<String>>> newAttrs = new AtomicReference<>();
+        mockClient.updateUserAttributes = ((u, a) -> {
+            targetUserName1.set(u);
+            newAttrs.set(a);
+        });
+
+        // When
+        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+
+        // Then
+        assertNull(affected);
+
+        assertEquals(key, targetUid.get().getUidValue());
+
+        User updatedUser = updated.get();
+        assertEquals(userName, updatedUser.getName());
+        assertEquals(email, updatedUser.getEmailAddress());
+        assertNull(updatedUser.getDisplayName());
+        assertNull(updatedUser.getFirstName());
+        assertNull(updatedUser.getLastName());
+        assertTrue(updatedUser.isActive());
+
+        assertEquals(currentUserName, targetUserName1.get());
+        assertNotNull(newAttrs.get());
+
+        Map<String, Set<String>> updatedAttrs = newAttrs.get();
+        assertEquals(2, updatedAttrs.size());
+        assertTrue(updatedAttrs.get("custom1").isEmpty(), "Expected empty set to remove the attribute, but has value");
+        assertTrue(updatedAttrs.get("custom2").isEmpty(), "Expected empty set to remove the attribute, but has value");
+    }
+
+    @Test
     void updateUserGroups() {
         // Given
         String currentUserName = "foo";
