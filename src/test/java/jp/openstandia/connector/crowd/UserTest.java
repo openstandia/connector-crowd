@@ -268,6 +268,41 @@ class UserTest extends AbstractTest {
     }
 
     @Test
+    void updateUserWithInactive() {
+        // Given
+        String currentUserName = "foo";
+
+        String key = "12345:abc";
+        boolean active = false;
+
+        Set<AttributeDelta> modifications = new HashSet<>();
+        modifications.add(AttributeDeltaBuilder.buildEnabled(active));
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
+
+            UserEntity current = new UserEntity(currentUserName, null, null, null, null, null, true, key, null, null, false);
+            return current;
+        });
+        AtomicReference<User> updated = new AtomicReference<>();
+        mockClient.updateUser = ((user) -> {
+            updated.set(user);
+        });
+
+        // When
+        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+
+        // Then
+        assertNull(affected);
+
+        assertEquals(key, targetUid.get().getUidValue());
+
+        User updatedUser = updated.get();
+        assertEquals(active, updatedUser.isActive());
+    }
+
+    @Test
     void updateUserWithAttributesAdd() {
         // Apply custom configuration for this test
         configuration.setUserAttributesSchema(new String[]{"custom1$string", "custom2$stringArray"});

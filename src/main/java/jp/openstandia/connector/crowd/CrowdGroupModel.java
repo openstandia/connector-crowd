@@ -17,6 +17,7 @@ package jp.openstandia.connector.crowd;
 
 import com.atlassian.crowd.integration.rest.entity.GroupEntity;
 import com.atlassian.crowd.integration.rest.entity.MultiValuedAttributeEntity;
+import com.atlassian.crowd.integration.rest.entity.MultiValuedAttributeEntityList;
 import com.atlassian.crowd.model.group.GroupType;
 import com.atlassian.crowd.model.group.ImmutableGroupWithAttributes;
 
@@ -36,7 +37,8 @@ public class CrowdGroupModel {
 
     public CrowdGroupModel(GroupEntity group) {
         this.group = ImmutableGroupWithAttributes.builder(group);
-        if (group.getAttributes().size() > 0) {
+        MultiValuedAttributeEntityList attributes = group.getAttributes();
+        if (attributes != null && attributes.size() > 0) {
             Map<String, Set<String>> current = new HashMap<>();
 
             Iterator<MultiValuedAttributeEntity> iter = group.getAttributes().iterator();

@@ -21,6 +21,7 @@ import com.atlassian.crowd.integration.rest.entity.GroupEntity;
 import com.atlassian.crowd.integration.rest.entity.UserEntity;
 import com.atlassian.crowd.integration.rest.service.ExceptionUtil;
 import com.atlassian.crowd.integration.rest.service.RestExecutorWrapper;
+import com.atlassian.crowd.model.group.Group;
 import com.atlassian.crowd.model.group.GroupWithAttributes;
 import com.atlassian.crowd.model.user.User;
 import com.atlassian.crowd.model.user.UserWithAttributes;
@@ -337,7 +338,7 @@ public class CrowdRESTClient {
         }
     }
 
-    public void updateGroup(GroupWithAttributes update) {
+    public void updateGroup(Group update) {
         try {
             this.crowdClient.updateGroup(update);
 

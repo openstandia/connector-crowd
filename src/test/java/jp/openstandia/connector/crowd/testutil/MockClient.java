@@ -15,7 +15,9 @@
  */
 package jp.openstandia.connector.crowd.testutil;
 
+import com.atlassian.crowd.integration.rest.entity.GroupEntity;
 import com.atlassian.crowd.integration.rest.entity.UserEntity;
+import com.atlassian.crowd.model.group.Group;
 import com.atlassian.crowd.model.group.GroupWithAttributes;
 import com.atlassian.crowd.model.user.User;
 import com.atlassian.crowd.model.user.UserWithAttributes;
@@ -50,6 +52,10 @@ public class MockClient extends CrowdRESTClient {
     public MockConsumer<Uid> deleteUser;
     public MockFunction<GroupWithAttributes, Uid> createGroup;
     public MockBiConsumer<String, List<String>> addGroupToGroup;
+    public MockBiConsumer<String, List<String>> deleteGroupToGroup;
+    public MockConsumer<Group> updateGroup;
+    public MockFunction<Uid, GroupEntity> getGroupByUid;
+    public MockFunction<Name, GroupEntity> getGroupByName;
 
     public boolean closed = false;
 
@@ -146,6 +152,26 @@ public class MockClient extends CrowdRESTClient {
     @Override
     public void addGroupToGroup(String groupName, List<String> groups) throws AlreadyExistsException {
         addGroupToGroup.accept(groupName, groups);
+    }
+
+    @Override
+    public void deleteGroupFromGroup(String groupName, List<String> groups) throws AlreadyExistsException {
+        deleteGroupToGroup.accept(groupName, groups);
+    }
+
+    @Override
+    public void updateGroup(Group update) {
+        updateGroup.accept(update);
+    }
+
+    @Override
+    public GroupEntity getGroup(Uid uid, OperationOptions options, Set<String> fetchFieldsSet) {
+        return getGroupByUid.apply(uid);
+    }
+
+    @Override
+    public GroupEntity getGroup(Name name, OperationOptions options, Set<String> fetchFieldsSet) {
+        return getGroupByName.apply(name);
     }
 
     @FunctionalInterface
