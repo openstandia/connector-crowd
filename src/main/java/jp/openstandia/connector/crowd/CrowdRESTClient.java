@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 public class CrowdRESTClient {
     private static final Log LOG = Log.getLog(CrowdRESTClient.class);
@@ -303,7 +304,7 @@ public class CrowdRESTClient {
         }
     }
 
-    public List<String> getGroupsForUser(String userName, int pageSize) {
+    public Stream<String> getGroupsForUser(String userName, int pageSize) {
         // Crowd starts from 0
         int start = 0;
         List<String> results = new ArrayList<>();
@@ -313,7 +314,7 @@ public class CrowdRESTClient {
 
                 if (groups.size() == 0) {
                     // End of the page
-                    return results;
+                    return results.stream();
                 }
 
                 results.addAll(groups);
@@ -347,7 +348,7 @@ public class CrowdRESTClient {
         }
     }
 
-    public List<String> getGroupsForGroup(String groupName, int pageSize) {
+    public Stream<String> getGroupsForGroup(String groupName, int pageSize) {
         // Crowd starts from 0
         int start = 0;
         List<String> results = new ArrayList<>();
@@ -357,7 +358,7 @@ public class CrowdRESTClient {
 
                 if (groups.size() == 0) {
                     // End of the page
-                    return results;
+                    return results.stream();
                 }
 
                 results.addAll(groups);

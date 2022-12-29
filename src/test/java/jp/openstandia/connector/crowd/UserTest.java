@@ -578,7 +578,7 @@ class UserTest extends AbstractTest {
             targetName.set(u);
             targetPageSize.set(size);
 
-            return groups;
+            return groups.stream();
         });
 
         // When
@@ -696,7 +696,7 @@ class UserTest extends AbstractTest {
             targetName.set(u);
             targetPageSize.set(size);
 
-            return groups;
+            return groups.stream();
         });
 
         // When
@@ -746,7 +746,7 @@ class UserTest extends AbstractTest {
             targetName.set(u);
             targetPageSize.set(size);
 
-            return groups;
+            return groups.stream();
         });
 
         // When
@@ -800,7 +800,7 @@ class UserTest extends AbstractTest {
             targetName.set(u);
             targetPageSize.set(size);
 
-            return groups;
+            return groups.stream();
         });
 
         // When

@@ -26,7 +26,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Provides utility methods
@@ -164,8 +164,8 @@ public class Utils {
         return s;
     }
 
-    public static List<String> filterGroups(CrowdConfiguration configuration, List<String> groups) {
+    public static Stream<String> filterGroups(CrowdConfiguration configuration, Stream<String> groups) {
         Set<String> ignoreGroup = configuration.getIgnoreGroupSet();
-        return groups.stream().filter(g -> !ignoreGroup.contains(g.toLowerCase())).collect(Collectors.toList());
+        return groups.filter(g -> !ignoreGroup.contains(g.toLowerCase()));
     }
 }

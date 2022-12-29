@@ -514,7 +514,7 @@ class GroupTest extends AbstractTest {
             targetName.set(n);
             targetPageSize.set(size);
 
-            return groups;
+            return groups.stream();
         });
 
         // When
@@ -618,11 +618,11 @@ class GroupTest extends AbstractTest {
         });
         AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<Integer> targetPageSize = new AtomicReference<>();
-        mockClient.getGroupsForGroup = ((u, size) -> {
-            targetName.set(u);
+        mockClient.getGroupsForGroup = ((n, size) -> {
+            targetName.set(n);
             targetPageSize.set(size);
 
-            return groups;
+            return groups.stream();
         });
 
         // When
@@ -656,11 +656,11 @@ class GroupTest extends AbstractTest {
         });
         AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<Integer> targetPageSize = new AtomicReference<>();
-        mockClient.getGroupsForGroup = ((u, size) -> {
-            targetName.set(u);
+        mockClient.getGroupsForGroup = ((n, size) -> {
+            targetName.set(n);
             targetPageSize.set(size);
 
-            return groups;
+            return groups.stream();
         });
 
         // When
@@ -698,11 +698,11 @@ class GroupTest extends AbstractTest {
         });
         AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<Integer> targetPageSize = new AtomicReference<>();
-        mockClient.getGroupsForGroup = ((u, size) -> {
-            targetName.set(u);
+        mockClient.getGroupsForGroup = ((n, size) -> {
+            targetName.set(n);
             targetPageSize.set(size);
 
-            return groups;
+            return groups.stream();
         });
 
         // When

@@ -33,6 +33,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class MockClient extends CrowdRESTClient {
 
@@ -48,7 +49,7 @@ public class MockClient extends CrowdRESTClient {
     public MockFunction<Uid, UserEntity> getUserByUid;
     public MockFunction<Name, UserEntity> getUserByName;
     public MockTripleFunction<CrowdQueryHandler<UserWithAttributes>, Integer, Integer, Integer> getUsers;
-    public MockBiFunction<String, Integer, List<String>> getGroupsForUser;
+    public MockBiFunction<String, Integer, Stream<String>> getGroupsForUser;
     public MockConsumer<Uid> deleteUser;
 
     public MockFunction<GroupWithAttributes, Uid> createGroup;
@@ -59,7 +60,7 @@ public class MockClient extends CrowdRESTClient {
     public MockFunction<Uid, GroupEntity> getGroupByUid;
     public MockFunction<Name, GroupEntity> getGroupByName;
     public MockTripleFunction<CrowdQueryHandler<GroupWithAttributes>, Integer, Integer, Integer> getGroups;
-    public MockBiFunction<String, Integer, List<String>> getGroupsForGroup;
+    public MockBiFunction<String, Integer, Stream<String>> getGroupsForGroup;
     public MockConsumer<Uid> deleteGroup;
 
     public boolean closed = false;
@@ -138,7 +139,7 @@ public class MockClient extends CrowdRESTClient {
     }
 
     @Override
-    public List<String> getGroupsForUser(String userName, int pageSize) {
+    public Stream<String> getGroupsForUser(String userName, int pageSize) {
         return getGroupsForUser.apply(userName, pageSize);
     }
 
@@ -190,7 +191,7 @@ public class MockClient extends CrowdRESTClient {
     }
 
     @Override
-    public List<String> getGroupsForGroup(String groupName, int pageSize) {
+    public Stream<String> getGroupsForGroup(String groupName, int pageSize) {
         return getGroupsForGroup.apply(groupName, pageSize);
     }
 

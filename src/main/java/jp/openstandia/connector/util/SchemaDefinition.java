@@ -150,7 +150,7 @@ public class SchemaDefinition {
                                       BiConsumer<List<T>, C> create,
                                       BiConsumer<List<T>, U> updateAdd,
                                       BiConsumer<List<T>, U> updateRemove,
-                                      Function<R, List<T>> read,
+                                      Function<R, Stream<T>> read,
 
                                       String fetchField,
 
@@ -705,26 +705,25 @@ public class SchemaDefinition {
             }
 
             if (isMultiple) {
-                if (((List<?>) value).isEmpty()) {
-                    // Don't make attribute if no values
-                    return null;
-                }
+                Stream<?> multipleValues = (Stream<?>) value;
+
                 if (type == Types.DATE_STRING) {
-                    List<ZonedDateTime> values = ((List<?>) value).stream()
+                    List<ZonedDateTime> values = multipleValues
                             .map(v -> (String) v)
                             .map(v -> toDate(v))
                             .collect(Collectors.toList());
-                    return AttributeBuilder.build(connectorName, values);
+                    return safeBuildAttribute(values);
 
                 } else if (type == Types.DATETIME_STRING) {
-                    List<ZonedDateTime> values = ((List<?>) value).stream()
+                    List<ZonedDateTime> values = multipleValues
                             .map(v -> (String) v)
                             .map(v -> toDateTime(v))
                             .collect(Collectors.toList());
-                    return AttributeBuilder.build(connectorName, values);
+                    return safeBuildAttribute(values);
 
                 } else {
-                    return AttributeBuilder.build(connectorName, (List<?>) value);
+                    List<?> values = multipleValues.collect(Collectors.toList());
+                    return safeBuildAttribute(values);
                 }
 
             } else {
@@ -745,6 +744,14 @@ public class SchemaDefinition {
                 return Collections.emptyList().stream();
             }
             return list.stream();
+        }
+
+        private Attribute safeBuildAttribute(List<?> values) {
+            if (values.isEmpty()) {
+                // Don't make attribute if no values
+                return null;
+            }
+            return AttributeBuilder.build(connectorName, values);
         }
     }
 }

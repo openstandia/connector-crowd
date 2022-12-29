@@ -21,11 +21,10 @@ import jp.openstandia.connector.util.SchemaDefinition;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static jp.openstandia.connector.util.Utils.filterGroups;
 import static org.identityconnectors.framework.common.objects.AttributeInfo.Flags.*;
@@ -116,9 +115,9 @@ public class CrowdGroupHandler implements ObjectHandler {
                                 (source) -> {
                                     Set<String> values = source.getAttributes().getValues(attrName);
                                     if (values == null) {
-                                        return Collections.emptyList();
+                                        return Stream.empty();
                                     }
-                                    return new ArrayList(values);
+                                    return values.stream();
                                 },
                                 null
                         );
