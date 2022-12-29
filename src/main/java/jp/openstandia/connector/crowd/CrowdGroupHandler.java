@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static jp.openstandia.connector.util.Utils.filterGroups;
 import static org.identityconnectors.framework.common.objects.AttributeInfo.Flags.*;
 
 public class CrowdGroupHandler implements ObjectHandler {
@@ -130,7 +131,7 @@ public class CrowdGroupHandler implements ObjectHandler {
                 (source, dest) -> dest.setGroups(source),
                 (add, dest) -> dest.addGroups(add),
                 (remove, dest) -> dest.removeGroups(remove),
-                (source) -> client.getGroupsForGroup(source.getName(), configuration.getDefaultQueryPageSize()),
+                (source) -> filterGroups(configuration, client.getGroupsForGroup(source.getName(), configuration.getDefaultQueryPageSize())),
                 null,
                 NOT_RETURNED_BY_DEFAULT
         );

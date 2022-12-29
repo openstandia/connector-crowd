@@ -678,6 +678,48 @@ class GroupTest extends AbstractTest {
     }
 
     @Test
+    void getGroupByUidWithGroupsWithIgnoreGroup() {
+        // Apply custom configuration for this test
+        configuration.setIgnoreGroup(new String[]{"Crowd-Administrators"});
+        ConnectorFacade connector = newFacade(configuration);
+
+        // Given
+        String key = "foo";
+        String currentName = "foo";
+        boolean active = true;
+        List<String> groups = list("group1", "crowd-administrators", "group2");
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getGroupByUid = ((u) -> {
+            targetUid.set(u);
+
+            GroupEntity result = new GroupEntity(currentName, null, GroupType.GROUP, active);
+            return result;
+        });
+        AtomicReference<String> targetName = new AtomicReference<>();
+        AtomicReference<Integer> targetPageSize = new AtomicReference<>();
+        mockClient.getGroupsForGroup = ((u, size) -> {
+            targetName.set(u);
+            targetPageSize.set(size);
+
+            return groups;
+        });
+
+        // When
+        // Request "groups"
+        ConnectorObject result = connector.getObject(GROUP_OBJECT_CLASS, new Uid(key, new Name(currentName)), defaultGetOperation("groups"));
+
+        // Then
+        assertEquals(GROUP_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(key, result.getUid().getUidValue());
+        assertEquals(currentName, result.getName().getNameValue());
+        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(list("group1", "group2"), multiAttr(result, "groups"));
+        assertEquals(currentName, targetName.get());
+        assertEquals(50, targetPageSize.get(), "Not default page size in the configuration");
+    }
+
+    @Test
     void getGroupByName() {
         // Given
         String key = "foo";

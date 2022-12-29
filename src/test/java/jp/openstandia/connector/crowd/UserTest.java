@@ -770,6 +770,60 @@ class UserTest extends AbstractTest {
     }
 
     @Test
+    void getUserByUidWithGroupsWithIgnoreGroup() {
+        // Apply custom configuration for this test
+        configuration.setIgnoreGroup(new String[]{"Crowd-Administrators"});
+        ConnectorFacade connector = newFacade(configuration);
+
+        // Given
+        String key = "12345:abc";
+        String userName = "foo";
+        String email = "foo@example.com";
+        String displayName = "Foo Bar";
+        String firstName = "Foo";
+        String lastName = "Bar";
+        boolean active = true;
+        Date createdDate = Date.from(Instant.now());
+        Date updatedDate = Date.from(Instant.now());
+        List<String> groups = list("group1", "crowd-administrators", "group2");
+
+        AtomicReference<Uid> targetUid = new AtomicReference<>();
+        mockClient.getUserByUid = ((u) -> {
+            targetUid.set(u);
+
+            UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
+            return result;
+        });
+        AtomicReference<String> targetName = new AtomicReference<>();
+        AtomicReference<Integer> targetPageSize = new AtomicReference<>();
+        mockClient.getGroupsForUser = ((u, size) -> {
+            targetName.set(u);
+            targetPageSize.set(size);
+
+            return groups;
+        });
+
+        // When
+        // Request "groups"
+        ConnectorObject result = connector.getObject(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation("groups"));
+
+        // Then
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(key, result.getUid().getUidValue());
+        assertEquals(userName, result.getName().getNameValue());
+        assertEquals(email, singleAttr(result, "email"));
+        assertEquals(displayName, singleAttr(result, "display-name"));
+        assertEquals(firstName, singleAttr(result, "first-name"));
+        assertEquals(lastName, singleAttr(result, "last-name"));
+        assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+        assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
+        assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
+        assertEquals(list("group1", "group2"), multiAttr(result, "groups"));
+        assertEquals(userName, targetName.get());
+        assertEquals(50, targetPageSize.get(), "Not default page size in the configuration");
+    }
+
+    @Test
     void getUserByName() {
         // Given
         String key = "12345:abc";

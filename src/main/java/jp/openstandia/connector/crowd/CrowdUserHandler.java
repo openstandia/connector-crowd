@@ -27,8 +27,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static jp.openstandia.connector.util.Utils.handleEmptyAsNull;
-import static jp.openstandia.connector.util.Utils.toZoneDateTime;
+import static jp.openstandia.connector.util.Utils.*;
 import static org.identityconnectors.framework.common.objects.AttributeInfo.Flags.*;
 
 public class CrowdUserHandler implements ObjectHandler {
@@ -162,7 +161,7 @@ public class CrowdUserHandler implements ObjectHandler {
                 (source, dest) -> dest.setGroups(source),
                 (add, dest) -> dest.addGroups(add),
                 (remove, dest) -> dest.removeGroups(remove),
-                (source) -> client.getGroupsForUser(source.getName(), configuration.getDefaultQueryPageSize()),
+                (source) -> filterGroups(configuration, client.getGroupsForUser(source.getName(), configuration.getDefaultQueryPageSize())),
                 null,
                 NOT_RETURNED_BY_DEFAULT
         );

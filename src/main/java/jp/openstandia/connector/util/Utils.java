@@ -15,6 +15,7 @@
  */
 package jp.openstandia.connector.util;
 
+import jp.openstandia.connector.crowd.CrowdConfiguration;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
@@ -25,6 +26,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Provides utility methods
@@ -160,5 +162,10 @@ public class Utils {
             return null;
         }
         return s;
+    }
+
+    public static List<String> filterGroups(CrowdConfiguration configuration, List<String> groups) {
+        Set<String> ignoreGroup = configuration.getIgnoreGroupSet();
+        return groups.stream().filter(g -> !ignoreGroup.contains(g.toLowerCase())).collect(Collectors.toList());
     }
 }

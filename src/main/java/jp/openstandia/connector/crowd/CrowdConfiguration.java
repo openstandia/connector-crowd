@@ -20,6 +20,11 @@ import org.identityconnectors.framework.common.exceptions.ConfigurationException
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class CrowdConfiguration extends AbstractConfiguration {
 
     private String baseURL;
@@ -34,6 +39,7 @@ public class CrowdConfiguration extends AbstractConfiguration {
     private int socketTimeoutInMilliseconds = 600000;
     private String[] userAttributesSchema = new String[]{};
     private String[] groupAttributesSchema = new String[]{};
+    private Set<String> ignoreGroup = new HashSet<>();
 
     @ConfigurationProperty(
             order = 1,
@@ -203,6 +209,24 @@ public class CrowdConfiguration extends AbstractConfiguration {
 
     public void setGroupAttributesSchema(String[] groupAttributesSchema) {
         this.groupAttributesSchema = groupAttributesSchema;
+    }
+
+    @ConfigurationProperty(
+            order = 13,
+            displayMessageKey = "Ignore Group",
+            helpMessageKey = "Define the group name to be ignored when fetching group membership. The group name is case-insensitive.",
+            required = false,
+            confidential = false)
+    public String[] getIgnoreGroup() {
+        return ignoreGroup.toArray(new String[0]);
+    }
+
+    public void setIgnoreGroup(String[] ignoreGroup) {
+        this.ignoreGroup = Arrays.stream(ignoreGroup).map(x -> x.toLowerCase()).collect(Collectors.toSet());
+    }
+
+    public Set<String> getIgnoreGroupSet() {
+        return ignoreGroup;
     }
 
     @Override
