@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 public class CrowdRESTClient {
     private static final Log LOG = Log.getLog(CrowdRESTClient.class);
@@ -219,23 +220,56 @@ public class CrowdRESTClient {
         }
     }
 
-    public int getUsers(CrowdQueryHandler<UserEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
-        // ConnId starts from 1
+    public int getUsers(CrowdQueryHandler<UserWithAttributes> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
+        // ConnId starts from 1, 0 means no offset (requested all data)
+        if (pageOffset < 1) {
+            return getAll(handler, pageSize, (start, size) -> {
+                try {
+                    List<UserWithAttributes> users = this.crowdClient.searchUsersWithAttributes(NullRestriction.INSTANCE, start, size);
+                    return users;
+                } catch (Exception e) {
+                    throw handleException(e);
+                }
+            });
+        }
+
+        // Pagination
         // Crowd starts from 0
         int start = pageOffset - 1;
         int count = 0;
+
+        try {
+            List<UserWithAttributes> users = this.crowdClient.searchUsersWithAttributes(NullRestriction.INSTANCE, start, pageSize);
+
+            for (UserWithAttributes user : users) {
+                count++;
+                if (!handler.handle(user)) {
+                    return count;
+                }
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+
+        return count;
+    }
+
+    protected <T> int getAll(CrowdQueryHandler<T> handler, int pageSize, BiFunction<Integer, Integer, List<T>> apiCall) {
+        // Crowd starts from 0
+        int start = 0;
+        int count = 0;
         try {
             while (true) {
-                List<UserWithAttributes> users = this.crowdClient.searchUsersWithAttributes(NullRestriction.INSTANCE, start, pageSize);
+                List<T> results = apiCall.apply(start, pageSize);
 
-                if (users.size() == 0) {
+                if (results.size() == 0) {
                     // End of the page
                     return count;
                 }
 
-                for (User user : users) {
+                for (T result : results) {
                     count++;
-                    if (!handler.handle((UserEntity) user)) {
+                    if (!handler.handle(result)) {
                         return count;
                     }
                 }
@@ -378,33 +412,38 @@ public class CrowdRESTClient {
         }
     }
 
-    public int getGroups(CrowdQueryHandler<GroupEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
-        // ConnId starts from 1
+    public int getGroups(CrowdQueryHandler<GroupWithAttributes> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
+        // ConnId starts from 1, 0 means no offset (requested all data)
+        if (pageOffset < 1) {
+            return getAll(handler, pageSize, (start, size) -> {
+                try {
+                    List<GroupWithAttributes> groups = this.crowdClient.searchGroupsWithAttributes(NullRestriction.INSTANCE, start, size);
+                    return groups;
+                } catch (Exception e) {
+                    throw handleException(e);
+                }
+            });
+        }
+
+        // Pagination
         // Crowd starts from 0
         int start = pageOffset - 1;
         int count = 0;
-        try {
-            while (true) {
-                List<GroupWithAttributes> groups = this.crowdClient.searchGroupsWithAttributes(NullRestriction.INSTANCE, start, pageSize);
 
-                if (groups.size() == 0) {
-                    // End of the page
+        try {
+            List<GroupWithAttributes> groups = this.crowdClient.searchGroupsWithAttributes(NullRestriction.INSTANCE, start, pageSize);
+
+            for (GroupWithAttributes group : groups) {
+                count++;
+                if (!handler.handle(group)) {
                     return count;
                 }
-
-                for (GroupWithAttributes group : groups) {
-                    count++;
-                    if (!handler.handle((GroupEntity) group)) {
-                        return count;
-                    }
-                }
-
-                // search next page
-                start += pageSize;
             }
         } catch (Exception e) {
             throw handleException(e);
         }
+
+        return count;
     }
 
     public void deleteGroup(Uid uid) {

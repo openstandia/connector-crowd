@@ -47,7 +47,7 @@ public class MockClient extends CrowdRESTClient {
     public MockBiConsumer<String, String> renameUser;
     public MockFunction<Uid, UserEntity> getUserByUid;
     public MockFunction<Name, UserEntity> getUserByName;
-    public MockTripleFunction<CrowdQueryHandler<UserEntity>, Integer, Integer, Integer> getUsers;
+    public MockTripleFunction<CrowdQueryHandler<UserWithAttributes>, Integer, Integer, Integer> getUsers;
     public MockBiFunction<String, Integer, List<String>> getGroupsForUser;
     public MockConsumer<Uid> deleteUser;
 
@@ -58,7 +58,7 @@ public class MockClient extends CrowdRESTClient {
     public MockBiConsumer<String, Map<String, Set<String>>> updateGroupAttributes;
     public MockFunction<Uid, GroupEntity> getGroupByUid;
     public MockFunction<Name, GroupEntity> getGroupByName;
-    public MockTripleFunction<CrowdQueryHandler<GroupEntity>, Integer, Integer, Integer> getGroups;
+    public MockTripleFunction<CrowdQueryHandler<GroupWithAttributes>, Integer, Integer, Integer> getGroups;
     public MockBiFunction<String, Integer, List<String>> getGroupsForGroup;
     public MockConsumer<Uid> deleteGroup;
 
@@ -133,7 +133,7 @@ public class MockClient extends CrowdRESTClient {
     }
 
     @Override
-    public int getUsers(CrowdQueryHandler<UserEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
+    public int getUsers(CrowdQueryHandler<UserWithAttributes> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
         return getUsers.apply(handler, pageSize, pageOffset);
     }
 
@@ -185,7 +185,7 @@ public class MockClient extends CrowdRESTClient {
     }
 
     @Override
-    public int getGroups(CrowdQueryHandler<GroupEntity> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
+    public int getGroups(CrowdQueryHandler<GroupWithAttributes> handler, OperationOptions options, Set<String> fetchFieldsSet, int pageSize, int pageOffset) {
         return getGroups.apply(handler, pageSize, pageOffset);
     }
 
