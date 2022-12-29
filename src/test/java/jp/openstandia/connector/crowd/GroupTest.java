@@ -56,10 +56,10 @@ class GroupTest extends AbstractTest {
 
             return new Uid(groupName, new Name(groupName));
         });
-        AtomicReference<String> targetGroupName = new AtomicReference<>();
+        AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<List<String>> targetGroups = new AtomicReference<>();
         mockClient.addGroupToGroup = ((n, g) -> {
-            targetGroupName.set(n);
+            targetName.set(n);
             targetGroups.set(g);
         });
 
@@ -75,7 +75,7 @@ class GroupTest extends AbstractTest {
         assertEquals(desc, newGroup.getDescription());
         assertTrue(newGroup.isActive());
 
-        assertEquals("foo", targetGroupName.get());
+        assertEquals("foo", targetName.get());
         assertEquals(groups, targetGroups.get());
     }
 
@@ -102,10 +102,10 @@ class GroupTest extends AbstractTest {
 
             return new Uid(groupName, new Name(groupName));
         });
-        AtomicReference<String> targetGroupName = new AtomicReference<>();
+        AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<Map<String, Set<String>>> newAttrs = new AtomicReference<>();
         mockClient.updateGroupAttributes = ((n, a) -> {
-            targetGroupName.set(n);
+            targetName.set(n);
             newAttrs.set(a);
         });
 
@@ -183,7 +183,7 @@ class GroupTest extends AbstractTest {
     @Test
     void updateGroup() {
         // Given
-        String currentGroupName = "hoge";
+        String currentName = "hoge";
 
         String desc = "This is foo group.";
         List<String> groups = list("p1", "p2");
@@ -196,32 +196,32 @@ class GroupTest extends AbstractTest {
         mockClient.getGroupByUid = ((u) -> {
             targetUid.set(u);
 
-            GroupEntity current = GroupEntity.newMinimalInstance(currentGroupName);
+            GroupEntity current = GroupEntity.newMinimalInstance(currentName);
             return current;
         });
         AtomicReference<Group> updated = new AtomicReference<>();
         mockClient.updateGroup = ((g) -> {
             updated.set(g);
         });
-        AtomicReference<String> targetGroupName = new AtomicReference<>();
+        AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<List<String>> targetAddGroups = new AtomicReference<>();
         mockClient.addGroupToGroup = ((n, g) -> {
-            targetGroupName.set(n);
+            targetName.set(n);
             targetAddGroups.set(g);
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(GROUP_OBJECT_CLASS, new Uid(currentGroupName, new Name(currentGroupName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(GROUP_OBJECT_CLASS, new Uid(currentName, new Name(currentName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
 
-        assertEquals(currentGroupName, targetUid.get().getUidValue());
+        assertEquals(currentName, targetUid.get().getUidValue());
 
         Group updatedGroup = updated.get();
         assertEquals(desc, updatedGroup.getDescription());
 
-        assertEquals(currentGroupName, targetGroupName.get());
+        assertEquals(currentName, targetName.get());
         assertEquals(groups, targetAddGroups.get());
     }
 
@@ -229,7 +229,7 @@ class GroupTest extends AbstractTest {
     void updateGroupWithInactive() {
         // Given
         String key = "foo";
-        String currentGroupName = "foo";
+        String currentName = "foo";
 
         boolean active = false;
 
@@ -240,7 +240,7 @@ class GroupTest extends AbstractTest {
         mockClient.getGroupByUid = ((u) -> {
             targetUid.set(u);
 
-            GroupEntity current = new GroupEntity(currentGroupName, null, GroupType.GROUP, true);
+            GroupEntity current = new GroupEntity(currentName, null, GroupType.GROUP, true);
             return current;
         });
         AtomicReference<Group> updated = new AtomicReference<>();
@@ -249,7 +249,7 @@ class GroupTest extends AbstractTest {
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(GROUP_OBJECT_CLASS, new Uid(key, new Name(currentGroupName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(GROUP_OBJECT_CLASS, new Uid(key, new Name(currentName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
@@ -283,10 +283,10 @@ class GroupTest extends AbstractTest {
             GroupEntity current = GroupEntity.newMinimalInstance(currentName);
             return current;
         });
-        AtomicReference<String> targetGroupName = new AtomicReference<>();
+        AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<Map<String, Set<String>>> newAttrs = new AtomicReference<>();
         mockClient.updateGroupAttributes = ((n, a) -> {
-            targetGroupName.set(n);
+            targetName.set(n);
             newAttrs.set(a);
         });
 
@@ -298,7 +298,7 @@ class GroupTest extends AbstractTest {
 
         assertEquals(key, targetUid.get().getUidValue());
 
-        assertEquals(currentName, targetGroupName.get());
+        assertEquals(currentName, targetName.get());
         assertNotNull(newAttrs.get());
         Map<String, Set<String>> updatedAttrs = newAttrs.get();
         assertEquals(set(custom1), updatedAttrs.get("custom1"));
@@ -719,7 +719,6 @@ class GroupTest extends AbstractTest {
         String currentName = "foo";
         String desc = "This is foo group.";
         boolean active = true;
-        List<String> groups = list("group1", "group2");
 
         AtomicReference<Name> targetName = new AtomicReference<>();
         mockClient.getGroupByName = ((u) -> {

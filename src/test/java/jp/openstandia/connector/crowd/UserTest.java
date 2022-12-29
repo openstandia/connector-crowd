@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static jp.openstandia.connector.crowd.CrowdUserHandler.USER_OBJECT_CLASS;
 import static jp.openstandia.connector.util.Utils.toZoneDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,15 +69,15 @@ class UserTest extends AbstractTest {
 
             return new Uid(key, new Name(userName));
         });
-        AtomicReference<String> targetUserName = new AtomicReference<>();
+        AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<List<String>> targetGroups = new AtomicReference<>();
         mockClient.addUserToGroup = ((u, g) -> {
-            targetUserName.set(u);
+            targetName.set(u);
             targetGroups.set(g);
         });
 
         // When
-        Uid uid = connector.create(CrowdUserHandler.USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+        Uid uid = connector.create(USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
 
         // Then
         assertEquals(key, uid.getUidValue());
@@ -92,7 +93,7 @@ class UserTest extends AbstractTest {
 
         assertEquals(password, toPlain(createdPassword.get()));
 
-        assertEquals(userName, targetUserName.get());
+        assertEquals(userName, targetName.get());
         assertEquals(groups, targetGroups.get());
     }
 
@@ -121,7 +122,7 @@ class UserTest extends AbstractTest {
         });
 
         // When
-        Uid uid = connector.create(CrowdUserHandler.USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+        Uid uid = connector.create(USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
 
         // Then
         assertEquals(key, uid.getUidValue());
@@ -151,7 +152,7 @@ class UserTest extends AbstractTest {
         });
 
         // When
-        Uid uid = connector.create(CrowdUserHandler.USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+        Uid uid = connector.create(USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
 
         // Then
         assertEquals(key, uid.getUidValue());
@@ -177,7 +178,7 @@ class UserTest extends AbstractTest {
         // When
         Throwable expect = null;
         try {
-            Uid uid = connector.create(CrowdUserHandler.USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+            Uid uid = connector.create(USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
         } catch (Throwable t) {
             expect = t;
         }
@@ -190,7 +191,7 @@ class UserTest extends AbstractTest {
     @Test
     void updateUser() {
         // Given
-        String currentUserName = "hoge";
+        String currentName = "hoge";
 
         String key = "12345:abc";
         String userName = "foo";
@@ -217,34 +218,34 @@ class UserTest extends AbstractTest {
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
 
-            UserEntity current = UserEntity.newMinimalInstance(currentUserName);
+            UserEntity current = UserEntity.newMinimalInstance(currentName);
             return current;
         });
         AtomicReference<User> updated = new AtomicReference<>();
         mockClient.updateUser = ((user) -> {
             updated.set(user);
         });
-        AtomicReference<String> targetUserName1 = new AtomicReference<>();
+        AtomicReference<String> targetName1 = new AtomicReference<>();
         AtomicReference<GuardedString> newPassword = new AtomicReference<>();
         mockClient.updatePassword = ((u, p) -> {
-            targetUserName1.set(u);
+            targetName1.set(u);
             newPassword.set(p);
         });
-        AtomicReference<String> targetUserName2 = new AtomicReference<>();
+        AtomicReference<String> targetName2 = new AtomicReference<>();
         AtomicReference<List<String>> targetAddGroups = new AtomicReference<>();
         mockClient.addUserToGroup = ((u, g) -> {
-            targetUserName2.set(u);
+            targetName2.set(u);
             targetAddGroups.set(g);
         });
-        AtomicReference<String> targetUserName3 = new AtomicReference<>();
+        AtomicReference<String> targetName3 = new AtomicReference<>();
         AtomicReference<String> newtUserName = new AtomicReference<>();
         mockClient.renameUser = ((u, n) -> {
-            targetUserName3.set(u);
+            targetName3.set(u);
             newtUserName.set(n);
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
@@ -257,20 +258,20 @@ class UserTest extends AbstractTest {
         assertEquals(lastName, updatedUser.getLastName());
         assertTrue(updatedUser.isActive());
 
-        assertEquals(currentUserName, targetUserName1.get());
+        assertEquals(currentName, targetName1.get());
         assertEquals(password, toPlain(newPassword.get()));
 
-        assertEquals(currentUserName, targetUserName2.get());
+        assertEquals(currentName, targetName2.get());
         assertEquals(groups, targetAddGroups.get());
 
-        assertEquals(currentUserName, targetUserName3.get());
+        assertEquals(currentName, targetName3.get());
         assertEquals(userName, newtUserName.get());
     }
 
     @Test
     void updateUserWithInactive() {
         // Given
-        String currentUserName = "foo";
+        String currentName = "foo";
 
         String key = "12345:abc";
         boolean active = false;
@@ -282,7 +283,7 @@ class UserTest extends AbstractTest {
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
 
-            UserEntity current = new UserEntity(currentUserName, null, null, null, null, null, true, key, null, null, false);
+            UserEntity current = new UserEntity(currentName, null, null, null, null, null, true, key, null, null, false);
             return current;
         });
         AtomicReference<User> updated = new AtomicReference<>();
@@ -291,7 +292,7 @@ class UserTest extends AbstractTest {
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(USER_OBJECT_CLASS, new Uid(key, new Name(currentName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
@@ -309,7 +310,7 @@ class UserTest extends AbstractTest {
         ConnectorFacade connector = newFacade(configuration);
 
         // Given
-        String currentUserName = "foo";
+        String currentName = "foo";
 
         String key = "12345:abc";
         String custom1 = "abc";
@@ -323,25 +324,25 @@ class UserTest extends AbstractTest {
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
 
-            UserEntity current = UserEntity.newMinimalInstance(currentUserName);
+            UserEntity current = UserEntity.newMinimalInstance(currentName);
             return current;
         });
-        AtomicReference<String> targetUserName1 = new AtomicReference<>();
+        AtomicReference<String> targetName1 = new AtomicReference<>();
         AtomicReference<Map<String, Set<String>>> newAttrs = new AtomicReference<>();
         mockClient.updateUserAttributes = ((u, a) -> {
-            targetUserName1.set(u);
+            targetName1.set(u);
             newAttrs.set(a);
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(USER_OBJECT_CLASS, new Uid(key, new Name(currentName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
 
         assertEquals(key, targetUid.get().getUidValue());
 
-        assertEquals(currentUserName, targetUserName1.get());
+        assertEquals(currentName, targetName1.get());
         assertNotNull(newAttrs.get());
         Map<String, Set<String>> updatedAttrs = newAttrs.get();
         assertEquals(set(custom1), updatedAttrs.get("custom1"));
@@ -355,7 +356,7 @@ class UserTest extends AbstractTest {
         ConnectorFacade connector = newFacade(configuration);
 
         // Given
-        String currentUserName = "foo";
+        String currentName = "foo";
 
         String key = "12345:abc";
         String custom1 = "abc";
@@ -370,29 +371,29 @@ class UserTest extends AbstractTest {
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
 
-            UserEntity current = UserEntity.newMinimalInstance(currentUserName);
+            UserEntity current = UserEntity.newMinimalInstance(currentName);
             List<MultiValuedAttributeEntity> attrs = new ArrayList<>();
             attrs.add(new MultiValuedAttributeEntity("custom1", list("xyz")));
             attrs.add(new MultiValuedAttributeEntity("custom2", list("123", "456")));
             current.setAttributes(new MultiValuedAttributeEntityList(attrs));
             return current;
         });
-        AtomicReference<String> targetUserName1 = new AtomicReference<>();
+        AtomicReference<String> targetName1 = new AtomicReference<>();
         AtomicReference<Map<String, Set<String>>> newAttrs = new AtomicReference<>();
         mockClient.updateUserAttributes = ((u, a) -> {
-            targetUserName1.set(u);
+            targetName1.set(u);
             newAttrs.set(a);
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(USER_OBJECT_CLASS, new Uid(key, new Name(currentName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
 
         assertEquals(key, targetUid.get().getUidValue());
 
-        assertEquals(currentUserName, targetUserName1.get());
+        assertEquals(currentName, targetName1.get());
         assertNotNull(newAttrs.get());
         Map<String, Set<String>> updatedAttrs = newAttrs.get();
         assertEquals(set(custom1), updatedAttrs.get("custom1"));
@@ -406,7 +407,7 @@ class UserTest extends AbstractTest {
         ConnectorFacade connector = newFacade(configuration);
 
         // Given
-        String currentUserName = "foo";
+        String currentName = "foo";
 
         String key = "12345:abc";
         String userName = "foo";
@@ -443,15 +444,15 @@ class UserTest extends AbstractTest {
         mockClient.updateUser = ((user) -> {
             updated.set(user);
         });
-        AtomicReference<String> targetUserName1 = new AtomicReference<>();
+        AtomicReference<String> targetName1 = new AtomicReference<>();
         AtomicReference<Map<String, Set<String>>> newAttrs = new AtomicReference<>();
         mockClient.updateUserAttributes = ((u, a) -> {
-            targetUserName1.set(u);
+            targetName1.set(u);
             newAttrs.set(a);
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(USER_OBJECT_CLASS, new Uid(key, new Name(currentName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
@@ -466,7 +467,7 @@ class UserTest extends AbstractTest {
         assertNull(updatedUser.getLastName());
         assertTrue(updatedUser.isActive());
 
-        assertEquals(currentUserName, targetUserName1.get());
+        assertEquals(currentName, targetName1.get());
         assertNotNull(newAttrs.get());
 
         Map<String, Set<String>> updatedAttrs = newAttrs.get();
@@ -478,7 +479,7 @@ class UserTest extends AbstractTest {
     @Test
     void updateUserGroups() {
         // Given
-        String currentUserName = "foo";
+        String currentName = "foo";
 
         String key = "12345:abc";
         List<String> addGroups = list("group1", "group2");
@@ -491,41 +492,41 @@ class UserTest extends AbstractTest {
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
 
-            UserEntity current = UserEntity.newMinimalInstance(currentUserName);
+            UserEntity current = UserEntity.newMinimalInstance(currentName);
             return current;
         });
-        AtomicReference<String> targetUserName2 = new AtomicReference<>();
+        AtomicReference<String> targetName1 = new AtomicReference<>();
         AtomicReference<List<String>> targetAddGroups = new AtomicReference<>();
         mockClient.addUserToGroup = ((u, g) -> {
-            targetUserName2.set(u);
+            targetName1.set(u);
             targetAddGroups.set(g);
         });
-        AtomicReference<String> targetUserName3 = new AtomicReference<>();
+        AtomicReference<String> targetName2 = new AtomicReference<>();
         AtomicReference<List<String>> targetDelGroups = new AtomicReference<>();
         mockClient.deleteUserFromGroup = ((u, g) -> {
-            targetUserName3.set(u);
+            targetName2.set(u);
             targetDelGroups.set(g);
         });
 
         // When
-        Set<AttributeDelta> affected = connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+        Set<AttributeDelta> affected = connector.updateDelta(USER_OBJECT_CLASS, new Uid(key, new Name(currentName)), modifications, new OperationOptionsBuilder().build());
 
         // Then
         assertNull(affected);
 
         assertEquals(key, targetUid.get().getUidValue());
 
-        assertEquals(currentUserName, targetUserName2.get());
+        assertEquals(currentName, targetName1.get());
         assertEquals(addGroups, targetAddGroups.get());
 
-        assertEquals(currentUserName, targetUserName3.get());
+        assertEquals(currentName, targetName2.get());
         assertEquals(delGroups, targetDelGroups.get());
     }
 
     @Test
     void updateUserButNotFound() {
         // Given
-        String currentUserName = "foo";
+        String currentName = "foo";
 
         String key = "12345:abc";
         String displayName = "Foo Bar";
@@ -540,7 +541,7 @@ class UserTest extends AbstractTest {
         // When
         Throwable expect = null;
         try {
-            connector.updateDelta(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(currentUserName)), modifications, new OperationOptionsBuilder().build());
+            connector.updateDelta(USER_OBJECT_CLASS, new Uid(key, new Name(currentName)), modifications, new OperationOptionsBuilder().build());
         } catch (Throwable t) {
             expect = t;
         }
@@ -564,10 +565,6 @@ class UserTest extends AbstractTest {
         Date updatedDate = Date.from(Instant.now());
         List<String> groups = list("group1", "group2");
 
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
-
         AtomicReference<Uid> targetUid = new AtomicReference<>();
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
@@ -575,20 +572,20 @@ class UserTest extends AbstractTest {
             UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
             return result;
         });
-        AtomicReference<String> targetUserName = new AtomicReference<>();
+        AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<Integer> targetPageSize = new AtomicReference<>();
         mockClient.getGroupsForUser = ((u, size) -> {
-            targetUserName.set(u);
+            targetName.set(u);
             targetPageSize.set(size);
 
             return groups;
         });
 
         // When
-        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
+        ConnectorObject result = connector.getObject(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
 
         // Then
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals(key, result.getUid().getUidValue());
         assertEquals(userName, result.getName().getNameValue());
         assertEquals(email, singleAttr(result, "email"));
@@ -599,7 +596,7 @@ class UserTest extends AbstractTest {
         assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
         assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
-        assertNull(targetUserName.get());
+        assertNull(targetName.get());
         assertNull(targetPageSize.get());
     }
 
@@ -616,10 +613,6 @@ class UserTest extends AbstractTest {
         boolean active = true;
         List<String> custom2 = list("123", "456");
 
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
-
         AtomicReference<Uid> targetUid = new AtomicReference<>();
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
@@ -633,10 +626,10 @@ class UserTest extends AbstractTest {
         });
 
         // When
-        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
+        ConnectorObject result = connector.getObject(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
 
         // Then
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals(key, result.getUid().getUidValue());
         assertEquals(userName, result.getName().getNameValue());
         assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
@@ -655,10 +648,6 @@ class UserTest extends AbstractTest {
         String userName = "foo";
         boolean active = true;
 
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
-
         AtomicReference<Uid> targetUid = new AtomicReference<>();
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
@@ -668,10 +657,10 @@ class UserTest extends AbstractTest {
         });
 
         // When
-        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
+        ConnectorObject result = connector.getObject(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
 
         // Then
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals(key, result.getUid().getUidValue());
         assertEquals(userName, result.getName().getNameValue());
         assertEquals(active, singleAttr(result, OperationalAttributes.ENABLE_NAME));
@@ -694,10 +683,6 @@ class UserTest extends AbstractTest {
         Date updatedDate = Date.from(Instant.now());
         List<String> groups = list("group1", "group2");
 
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
-
         AtomicReference<Uid> targetUid = new AtomicReference<>();
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
@@ -705,10 +690,10 @@ class UserTest extends AbstractTest {
             UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
             return result;
         });
-        AtomicReference<String> targetUserName = new AtomicReference<>();
+        AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<Integer> targetPageSize = new AtomicReference<>();
         mockClient.getGroupsForUser = ((u, size) -> {
-            targetUserName.set(u);
+            targetName.set(u);
             targetPageSize.set(size);
 
             return groups;
@@ -716,10 +701,10 @@ class UserTest extends AbstractTest {
 
         // When
         // No operation options
-        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), new OperationOptionsBuilder().build());
+        ConnectorObject result = connector.getObject(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), new OperationOptionsBuilder().build());
 
         // Then
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals(key, result.getUid().getUidValue());
         assertEquals(userName, result.getName().getNameValue());
         assertEquals(email, singleAttr(result, "email"));
@@ -730,7 +715,7 @@ class UserTest extends AbstractTest {
         assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
         assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertNull(result.getAttributeByName("groups"), "Unexpected returned groups even if not requested");
-        assertNull(targetUserName.get());
+        assertNull(targetName.get());
         assertNull(targetPageSize.get());
     }
 
@@ -748,10 +733,6 @@ class UserTest extends AbstractTest {
         Date updatedDate = Date.from(Instant.now());
         List<String> groups = list("group1", "group2");
 
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
-
         AtomicReference<Uid> targetUid = new AtomicReference<>();
         mockClient.getUserByUid = ((u) -> {
             targetUid.set(u);
@@ -759,10 +740,10 @@ class UserTest extends AbstractTest {
             UserEntity result = new UserEntity(userName, firstName, lastName, displayName, email, null, active, key, createdDate, updatedDate, false);
             return result;
         });
-        AtomicReference<String> targetUserName = new AtomicReference<>();
+        AtomicReference<String> targetName = new AtomicReference<>();
         AtomicReference<Integer> targetPageSize = new AtomicReference<>();
         mockClient.getGroupsForUser = ((u, size) -> {
-            targetUserName.set(u);
+            targetName.set(u);
             targetPageSize.set(size);
 
             return groups;
@@ -770,10 +751,10 @@ class UserTest extends AbstractTest {
 
         // When
         // Request "groups"
-        ConnectorObject result = connector.getObject(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation("groups"));
+        ConnectorObject result = connector.getObject(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation("groups"));
 
         // Then
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals(key, result.getUid().getUidValue());
         assertEquals(userName, result.getName().getNameValue());
         assertEquals(email, singleAttr(result, "email"));
@@ -784,7 +765,7 @@ class UserTest extends AbstractTest {
         assertEquals(toZoneDateTime(createdDate), singleAttr(result, "created-date"));
         assertEquals(toZoneDateTime(updatedDate), singleAttr(result, "updated-date"));
         assertEquals(groups, multiAttr(result, "groups"));
-        assertEquals(userName, targetUserName.get());
+        assertEquals(userName, targetName.get());
         assertEquals(50, targetPageSize.get(), "Not default page size in the configuration");
     }
 
@@ -801,10 +782,6 @@ class UserTest extends AbstractTest {
         Date createdDate = Date.from(Instant.now());
         Date updatedDate = Date.from(Instant.now());
 
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
-
         AtomicReference<Name> targetName = new AtomicReference<>();
         mockClient.getUserByName = ((u) -> {
             targetName.set(u);
@@ -819,12 +796,12 @@ class UserTest extends AbstractTest {
             results.add(connectorObject);
             return true;
         };
-        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation());
+        connector.search(USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation());
 
         // Then
         assertEquals(1, results.size());
         ConnectorObject result = results.get(0);
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals(key, result.getUid().getUidValue());
         assertEquals(userName, result.getName().getNameValue());
         assertEquals(email, singleAttr(result, "email"));
@@ -838,7 +815,7 @@ class UserTest extends AbstractTest {
     }
 
     @Test
-    void getUserByNameWithGroups() {
+    void getUserByNameWithGroupsWithPartialAttributeValues() {
         // Given
         String key = "12345:abc";
         String userName = "foo";
@@ -849,11 +826,6 @@ class UserTest extends AbstractTest {
         boolean active = true;
         Date createdDate = Date.from(Instant.now());
         Date updatedDate = Date.from(Instant.now());
-        List<String> groups = list("group1", "group2");
-
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
 
         AtomicReference<Name> targetName = new AtomicReference<>();
         mockClient.getUserByName = ((u) -> {
@@ -869,12 +841,12 @@ class UserTest extends AbstractTest {
             results.add(connectorObject);
             return true;
         };
-        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation("groups"));
+        connector.search(USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation("groups"));
 
         // Then
         assertEquals(1, results.size());
         ConnectorObject result = results.get(0);
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals(key, result.getUid().getUidValue());
         assertEquals(userName, result.getName().getNameValue());
         assertEquals(email, singleAttr(result, "email"));
@@ -900,10 +872,6 @@ class UserTest extends AbstractTest {
         Date createdDate = Date.from(Instant.now());
         Date updatedDate = Date.from(Instant.now());
 
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
-
         AtomicReference<Integer> targetPageSize = new AtomicReference<>();
         AtomicReference<Integer> targetOffset = new AtomicReference<>();
         mockClient.getUsers = ((h, size, offset) -> {
@@ -922,12 +890,12 @@ class UserTest extends AbstractTest {
             results.add(connectorObject);
             return true;
         };
-        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
+        connector.search(USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
 
         // Then
         assertEquals(1, results.size());
         ConnectorObject result = results.get(0);
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals(key, result.getUid().getUidValue());
         assertEquals(userName, result.getName().getNameValue());
         assertEquals(email, singleAttr(result, "email"));
@@ -963,7 +931,7 @@ class UserTest extends AbstractTest {
             results.add(connectorObject);
             return true;
         };
-        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
+        connector.search(USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
 
         // Then
         assertEquals(0, results.size());
@@ -995,18 +963,18 @@ class UserTest extends AbstractTest {
             results.add(connectorObject);
             return true;
         };
-        connector.search(CrowdUserHandler.USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
+        connector.search(USER_OBJECT_CLASS, null, handler, defaultSearchOperation());
 
         // Then
         assertEquals(2, results.size());
 
         ConnectorObject result = results.get(0);
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals("12345:abc", result.getUid().getUidValue());
         assertEquals("user1", result.getName().getNameValue());
 
         result = results.get(1);
-        assertEquals(CrowdUserHandler.USER_OBJECT_CLASS, result.getObjectClass());
+        assertEquals(USER_OBJECT_CLASS, result.getObjectClass());
         assertEquals("12345:efg", result.getUid().getUidValue());
         assertEquals("user2", result.getName().getNameValue());
 
@@ -1020,17 +988,13 @@ class UserTest extends AbstractTest {
         String key = "12345:abc";
         String userName = "foo";
 
-        Set<Attribute> attrs = new HashSet<>();
-        attrs.add(new Name(userName));
-        attrs.add(AttributeBuilder.buildEnabled(false));
-
         AtomicReference<Uid> deleted = new AtomicReference<>();
         mockClient.deleteUser = ((uid) -> {
             deleted.set(uid);
         });
 
         // When
-        connector.delete(CrowdUserHandler.USER_OBJECT_CLASS, new Uid(key, new Name(userName)), new OperationOptionsBuilder().build());
+        connector.delete(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), new OperationOptionsBuilder().build());
 
         // Then
         assertEquals(key, deleted.get().getUidValue());

@@ -20,8 +20,6 @@ import com.atlassian.crowd.integration.rest.entity.MultiValuedAttributeEntity;
 import com.atlassian.crowd.integration.rest.entity.MultiValuedAttributeEntityList;
 import com.atlassian.crowd.model.group.GroupType;
 import com.atlassian.crowd.model.group.ImmutableGroupWithAttributes;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
 
 import java.util.*;
 import java.util.stream.Collectors;
