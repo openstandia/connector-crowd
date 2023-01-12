@@ -63,7 +63,7 @@ public class CrowdRESTClient {
             LOG.info("[{0}] Crowd connector's connection test is OK", instanceName);
 
         } catch (Exception e) {
-            handleException(e);
+            throw handleException(e);
         }
     }
 
