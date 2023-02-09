@@ -35,8 +35,9 @@ public class CrowdConfiguration extends AbstractConfiguration {
     private String httpProxyUser;
     private GuardedString httpProxyPassword;
     private int defaultQueryPageSize = 50;
-    private int connectionTimeoutInSeconds = 5000;
+    private int connectionTimeoutInMilliseconds = 5000;
     private int socketTimeoutInMilliseconds = 600000;
+    private int httpMaxConnectionsPerPoolableConnector = 1;
     private String[] userAttributesSchema = new String[]{};
     private String[] groupAttributesSchema = new String[]{};
     private Set<String> ignoreGroup = new HashSet<>();
@@ -159,12 +160,12 @@ public class CrowdConfiguration extends AbstractConfiguration {
             helpMessageKey = "Connection timeout when connecting to Crowd. (Default: 5000)",
             required = false,
             confidential = false)
-    public int getConnectionTimeoutInSeconds() {
-        return connectionTimeoutInSeconds;
+    public int getConnectionTimeoutInMilliseconds() {
+        return connectionTimeoutInMilliseconds;
     }
 
-    public void setConnectionTimeoutInSeconds(int connectionTimeoutInSeconds) {
-        this.connectionTimeoutInSeconds = connectionTimeoutInSeconds;
+    public void setConnectionTimeoutInMilliseconds(int connectionTimeoutInMilliseconds) {
+        this.connectionTimeoutInMilliseconds = connectionTimeoutInMilliseconds;
     }
 
     @ConfigurationProperty(
@@ -183,6 +184,20 @@ public class CrowdConfiguration extends AbstractConfiguration {
 
     @ConfigurationProperty(
             order = 11,
+            displayMessageKey = "Http Max Connections per PoolableConnector",
+            helpMessageKey = "Http Max Connections for http client per PoolableConnector. (Default: 1)",
+            required = false,
+            confidential = false)
+    public int getHttpMaxConnectionsPerPoolableConnector() {
+        return httpMaxConnectionsPerPoolableConnector;
+    }
+
+    public void setHttpMaxConnectionsPerPoolableConnector(int httpMaxConnectionsPerPoolableConnector) {
+        this.httpMaxConnectionsPerPoolableConnector = httpMaxConnectionsPerPoolableConnector;
+    }
+
+    @ConfigurationProperty(
+            order = 12,
             displayMessageKey = "User Attributes Schema",
             helpMessageKey = "Define schema for user attributes. The format is \"fieldName$dataType\". " +
                     "The dataType is selected from \"string\", \"stringArray\".",
@@ -197,7 +212,7 @@ public class CrowdConfiguration extends AbstractConfiguration {
     }
 
     @ConfigurationProperty(
-            order = 12,
+            order = 13,
             displayMessageKey = "Group Attributes Schema",
             helpMessageKey = "Define schema for group attributes. The format is \"fieldName$dataType\". " +
                     "The dataType is selected from \"string\", \"stringArray\".",
@@ -212,7 +227,7 @@ public class CrowdConfiguration extends AbstractConfiguration {
     }
 
     @ConfigurationProperty(
-            order = 13,
+            order = 14,
             displayMessageKey = "Ignore Group",
             helpMessageKey = "Define the group name to be ignored when fetching group membership. The group name is case-insensitive.",
             required = false,

@@ -70,8 +70,9 @@ public class CrowdConnector implements PoolableConnector, CreateOp, UpdateDeltaO
                 .setAuthenticationMethod(AuthenticationMethod.BASIC_AUTH)
                 // This connector instance only uses 1 http connection
                 .setHttpMaxConnections("1")
-                .setHttpTimeout(Integer.toString(configuration.getConnectionTimeoutInSeconds()))
+                .setHttpTimeout(Integer.toString(configuration.getConnectionTimeoutInMilliseconds()))
                 .setSocketTimeout(Integer.toString(configuration.getSocketTimeoutInMilliseconds()))
+                .setHttpMaxConnections(Integer.toString(configuration.getHttpMaxConnectionsPerPoolableConnector()))
                 .setApplicationName(configuration.getApplicationName());
 
         configuration.getApplicationPassword().access(a -> {
