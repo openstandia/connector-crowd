@@ -198,6 +198,21 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!--
+            In midpoint v4.8, it doesn't have old jaxb libraries that the crowd-integration-client-rest has as the dependency.
+            We need to include old jaxb libraries for supporting the environment.
+            Also, we use same version in midpoint v4.4.
+        -->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.8</version>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
