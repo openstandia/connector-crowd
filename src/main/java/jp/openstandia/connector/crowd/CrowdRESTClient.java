@@ -312,7 +312,7 @@ public class CrowdRESTClient {
             while (true) {
                 List<String> groups = this.crowdClient.getNamesOfGroupsForUser(userName, start, pageSize);
 
-                if (groups.size() == 0) {
+                if (groups.isEmpty()) {
                     // End of the page
                     return results.stream();
                 }
@@ -320,7 +320,7 @@ public class CrowdRESTClient {
                 results.addAll(groups);
 
                 // search next page
-                start += pageSize + 1;
+                start += pageSize;
             }
         } catch (Exception e) {
             throw handleException(e);
@@ -356,7 +356,7 @@ public class CrowdRESTClient {
             while (true) {
                 List<String> groups = this.crowdClient.getNamesOfParentGroupsForGroup(groupName, start, pageSize);
 
-                if (groups.size() == 0) {
+                if (groups.isEmpty()) {
                     // End of the page
                     return results.stream();
                 }
@@ -364,7 +364,7 @@ public class CrowdRESTClient {
                 results.addAll(groups);
 
                 // search next page
-                start += pageSize + 1;
+                start += pageSize;
             }
         } catch (Exception e) {
             throw handleException(e);
