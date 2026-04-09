@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: crowd_mock
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  crowd-mock:
+    build: .
+    ports:
+      - "8095:8095"
+    environment:
+      CROWD_MOCK_DB_HOST: postgres
+      CROWD_MOCK_DB_PORT: "5432"
+      CROWD_MOCK_DB_NAME: crowd_mock
+      CROWD_MOCK_DB_USER: postgres
+      CROWD_MOCK_DB_PASSWORD: postgres
+      CROWD_MOCK_AUTH_USER: midpoint-connector
+      CROWD_MOCK_AUTH_PASSWORD: password
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
