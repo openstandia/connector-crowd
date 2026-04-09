@@ -19,6 +19,7 @@ import com.atlassian.crowd.integration.rest.entity.UserEntity;
 import jp.openstandia.connector.util.ObjectHandler;
 import jp.openstandia.connector.util.SchemaDefinition;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
 
 import java.util.Arrays;
@@ -245,7 +246,12 @@ public class CrowdUserHandler implements ObjectHandler {
     public int getByUid(Uid uid, ResultsHandler resultsHandler, OperationOptions options,
                         Set<String> returnAttributesSet, Set<String> fetchFieldsSet,
                         boolean allowPartialAttributeValues, int pageSize, int pageOffset) {
-        UserEntity user = client.getUser(uid, options, fetchFieldsSet);
+        UserEntity user;
+        try {
+            user = client.getUser(uid, options, fetchFieldsSet);
+        } catch (UnknownUidException e) {
+            return 0;
+        }
 
         if (user != null) {
             resultsHandler.handle(toConnectorObject(schema, user, returnAttributesSet, allowPartialAttributeValues));
@@ -258,7 +264,12 @@ public class CrowdUserHandler implements ObjectHandler {
     public int getByName(Name name, ResultsHandler resultsHandler, OperationOptions options,
                          Set<String> returnAttributesSet, Set<String> fetchFieldsSet,
                          boolean allowPartialAttributeValues, int pageSize, int pageOffset) {
-        UserEntity user = client.getUser(name, options, fetchFieldsSet);
+        UserEntity user;
+        try {
+            user = client.getUser(name, options, fetchFieldsSet);
+        } catch (UnknownUidException e) {
+            return 0;
+        }
 
         if (user != null) {
             resultsHandler.handle(toConnectorObject(schema, user, returnAttributesSet, allowPartialAttributeValues));

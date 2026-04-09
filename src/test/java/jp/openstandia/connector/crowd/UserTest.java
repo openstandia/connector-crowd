@@ -1037,6 +1037,44 @@ class UserTest extends AbstractTest {
     }
 
     @Test
+    void getUserByUidButNotFound() {
+        // Given
+        String key = "12345:abc";
+        String userName = "foo";
+
+        mockClient.getUserByUid = ((u) -> {
+            throw new UnknownUidException();
+        });
+
+        // When
+        ConnectorObject result = connector.getObject(USER_OBJECT_CLASS, new Uid(key, new Name(userName)), defaultGetOperation());
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    void getUserByNameButNotFound() {
+        // Given
+        String userName = "foo";
+
+        mockClient.getUserByName = ((u) -> {
+            throw new UnknownUidException();
+        });
+
+        // When
+        List<ConnectorObject> results = new ArrayList<>();
+        ResultsHandler handler = connectorObject -> {
+            results.add(connectorObject);
+            return true;
+        };
+        connector.search(USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name(userName)), handler, defaultSearchOperation());
+
+        // Then
+        assertEquals(0, results.size());
+    }
+
+    @Test
     void deleteUser() {
         // Given
         String key = "12345:abc";
