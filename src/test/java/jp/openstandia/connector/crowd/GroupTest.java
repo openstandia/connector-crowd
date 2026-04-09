@@ -902,6 +902,44 @@ class GroupTest extends AbstractTest {
     }
 
     @Test
+    void getGroupByUidButNotFound() {
+        // Given
+        String key = "foo";
+        String currentName = "foo";
+
+        mockClient.getGroupByUid = ((u) -> {
+            throw new UnknownUidException();
+        });
+
+        // When
+        ConnectorObject result = connector.getObject(GROUP_OBJECT_CLASS, new Uid(key, new Name(currentName)), defaultGetOperation());
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    void getGroupByNameButNotFound() {
+        // Given
+        String currentName = "foo";
+
+        mockClient.getGroupByName = ((u) -> {
+            throw new UnknownUidException();
+        });
+
+        // When
+        List<ConnectorObject> results = new ArrayList<>();
+        ResultsHandler handler = connectorObject -> {
+            results.add(connectorObject);
+            return true;
+        };
+        connector.search(GROUP_OBJECT_CLASS, FilterBuilder.equalTo(new Name(currentName)), handler, defaultSearchOperation());
+
+        // Then
+        assertEquals(0, results.size());
+    }
+
+    @Test
     void deleteGroup() {
         // Given
         String key = "foo";
