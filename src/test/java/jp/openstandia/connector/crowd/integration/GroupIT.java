@@ -255,15 +255,15 @@ class GroupIT extends AbstractIntegrationTest {
         createTestGroup("group3", null);
         createTestGroup("group4", null);
 
-        // Add foo as child of group3, group4
+        // Add foo as child of group2, group3, group4
         Set<AttributeDelta> init = new HashSet<>();
-        init.add(AttributeDeltaBuilder.build("groups", list("group3", "group4"), null));
+        init.add(AttributeDeltaBuilder.build("groups", list("group2", "group3", "group4"), null));
         connector.updateDelta(GROUP_OBJECT_CLASS,
                 new Uid("foo", new Name("foo")), init, new OperationOptionsBuilder().build());
 
-        // Now add group1, group2 and remove group3, group4
+        // Add group1, remove group3, group4 (group2 should remain unchanged)
         Set<AttributeDelta> modifications = new HashSet<>();
-        modifications.add(AttributeDeltaBuilder.build("groups", list("group1", "group2"), list("group3", "group4")));
+        modifications.add(AttributeDeltaBuilder.build("groups", list("group1"), list("group3", "group4")));
 
         connector.updateDelta(GROUP_OBJECT_CLASS,
                 new Uid("foo", new Name("foo")), modifications, new OperationOptionsBuilder().build());

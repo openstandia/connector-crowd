@@ -307,16 +307,16 @@ class UserIT extends AbstractIntegrationTest {
         connector.create(new ObjectClass("group"),
                 buildGroupAttrs("group4", null, true), new OperationOptionsBuilder().build());
 
-        // Create user with group3, group4
+        // Create user with group2, group3, group4
         Set<Attribute> attrs = new HashSet<>();
         attrs.add(new Name("foo"));
         attrs.add(AttributeBuilder.buildEnabled(true));
-        attrs.add(AttributeBuilder.build("groups", list("group3", "group4")));
+        attrs.add(AttributeBuilder.build("groups", list("group2", "group3", "group4")));
         Uid uid = connector.create(USER_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
 
-        // Add group1, group2 and remove group3, group4
+        // Add group1, remove group3, group4 (group2 should remain unchanged)
         Set<AttributeDelta> modifications = new HashSet<>();
-        modifications.add(AttributeDeltaBuilder.build("groups", list("group1", "group2"), list("group3", "group4")));
+        modifications.add(AttributeDeltaBuilder.build("groups", list("group1"), list("group3", "group4")));
 
         connector.updateDelta(USER_OBJECT_CLASS,
                 new Uid(uid.getUidValue(), new Name("foo")), modifications, new OperationOptionsBuilder().build());
