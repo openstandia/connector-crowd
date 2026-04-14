@@ -481,6 +481,64 @@ class UserIT extends AbstractIntegrationTest {
         assertNull(result);
     }
 
+    // --- Lifecycle ---
+
+    @Test
+    void userLifecycle() {
+        // Create
+        Uid uid = createTestUser("lifecycle-user", "lc@example.com", "Lifecycle User", "Life", "Cycle");
+
+        assertNotNull(uid);
+        assertNotNull(uid.getUidValue());
+
+        // Get by UID
+        ConnectorObject result = connector.getObject(USER_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-user")), defaultGetOperation());
+        assertEquals("lifecycle-user", result.getName().getNameValue());
+        assertEquals("lc@example.com", singleAttr(result, "email"));
+        assertEquals("Lifecycle User", singleAttr(result, "display-name"));
+
+        // Update
+        Set<AttributeDelta> modifications = new HashSet<>();
+        modifications.add(AttributeDeltaBuilder.build("display-name", "Updated Name"));
+        modifications.add(AttributeDeltaBuilder.buildEnabled(false));
+
+        connector.updateDelta(USER_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-user")), modifications, new OperationOptionsBuilder().build());
+
+        result = connector.getObject(USER_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-user")), defaultGetOperation());
+        assertEquals("Updated Name", singleAttr(result, "display-name"));
+        assertEquals(false, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+
+        // Delete
+        connector.delete(USER_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-user")), new OperationOptionsBuilder().build());
+
+        result = connector.getObject(USER_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-user")), defaultGetOperation());
+        assertNull(result);
+    }
+
+    // --- Case insensitive ---
+
+    @Test
+    void getUserByNameCaseInsensitive() {
+        // Create user with mixed case
+        createTestUser("FooBar", "foobar@example.com", "Foo Bar", "Foo", "Bar");
+
+        // Search by lowercase name (MidPoint normalizes due to STRING_CASE_IGNORE)
+        List<ConnectorObject> results = new ArrayList<>();
+        ResultsHandler handler = connectorObject -> {
+            results.add(connectorObject);
+            return true;
+        };
+        connector.search(USER_OBJECT_CLASS, FilterBuilder.equalTo(new Name("foobar")), handler, defaultSearchOperation());
+
+        assertEquals(1, results.size());
+        assertEquals("foobar@example.com", singleAttr(results.get(0), "email"));
+    }
+
     // --- Helpers ---
 
     private Uid createTestUser(String name, String email, String displayName, String firstName, String lastName) {

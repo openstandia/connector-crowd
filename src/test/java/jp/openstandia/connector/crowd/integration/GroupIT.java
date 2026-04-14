@@ -418,6 +418,107 @@ class GroupIT extends AbstractIntegrationTest {
         assertNull(result);
     }
 
+    // --- Lifecycle ---
+
+    @Test
+    void groupLifecycle() {
+        // Create
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name("lifecycle-group"));
+        attrs.add(AttributeBuilder.buildEnabled(true));
+        attrs.add(AttributeBuilder.build("description", "initial desc"));
+        Uid uid = connector.create(GROUP_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+
+        assertNotNull(uid);
+        assertEquals("lifecycle-group", uid.getUidValue());
+
+        // Get by UID
+        ConnectorObject result = connector.getObject(GROUP_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-group")), defaultGetOperation());
+        assertEquals("initial desc", singleAttr(result, "description"));
+
+        // Update
+        Set<AttributeDelta> modifications = new HashSet<>();
+        modifications.add(AttributeDeltaBuilder.build("description", "updated desc"));
+        modifications.add(AttributeDeltaBuilder.buildEnabled(false));
+
+        connector.updateDelta(GROUP_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-group")), modifications, new OperationOptionsBuilder().build());
+
+        result = connector.getObject(GROUP_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-group")), defaultGetOperation());
+        assertEquals("updated desc", singleAttr(result, "description"));
+        assertEquals(false, singleAttr(result, OperationalAttributes.ENABLE_NAME));
+
+        // Delete
+        connector.delete(GROUP_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-group")), new OperationOptionsBuilder().build());
+
+        result = connector.getObject(GROUP_OBJECT_CLASS,
+                new Uid(uid.getUidValue(), new Name("lifecycle-group")), defaultGetOperation());
+        assertNull(result);
+    }
+
+    // --- Case insensitive ---
+
+    @Test
+    void getGroupByUidCaseInsensitive() {
+        // Create group with mixed case
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name("MyGroup"));
+        attrs.add(AttributeBuilder.buildEnabled(true));
+        attrs.add(AttributeBuilder.build("description", "mixed case group"));
+        Uid uid = connector.create(GROUP_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+
+        // Get by lowercase UID (MidPoint normalizes to lowercase due to STRING_CASE_IGNORE)
+        ConnectorObject result = connector.getObject(GROUP_OBJECT_CLASS,
+                new Uid("mygroup", new Name("mygroup")), defaultGetOperation());
+
+        assertNotNull(result, "Should find group with case-insensitive lookup");
+        assertEquals("mixed case group", singleAttr(result, "description"));
+    }
+
+    @Test
+    void updateGroupCaseInsensitive() {
+        // Create group with mixed case
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name("TestGroup"));
+        attrs.add(AttributeBuilder.buildEnabled(true));
+        attrs.add(AttributeBuilder.build("description", "original"));
+        connector.create(GROUP_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+
+        // Update using lowercase UID
+        Set<AttributeDelta> modifications = new HashSet<>();
+        modifications.add(AttributeDeltaBuilder.build("description", "updated"));
+
+        connector.updateDelta(GROUP_OBJECT_CLASS,
+                new Uid("testgroup", new Name("testgroup")), modifications, new OperationOptionsBuilder().build());
+
+        // Verify update succeeded
+        ConnectorObject result = connector.getObject(GROUP_OBJECT_CLASS,
+                new Uid("testgroup", new Name("testgroup")), defaultGetOperation());
+        assertNotNull(result);
+        assertEquals("updated", singleAttr(result, "description"));
+    }
+
+    @Test
+    void deleteGroupCaseInsensitive() {
+        // Create group with mixed case
+        Set<Attribute> attrs = new HashSet<>();
+        attrs.add(new Name("DeleteMe"));
+        attrs.add(AttributeBuilder.buildEnabled(true));
+        connector.create(GROUP_OBJECT_CLASS, attrs, new OperationOptionsBuilder().build());
+
+        // Delete using lowercase UID
+        connector.delete(GROUP_OBJECT_CLASS,
+                new Uid("deleteme", new Name("deleteme")), new OperationOptionsBuilder().build());
+
+        // Verify deleted
+        ConnectorObject result = connector.getObject(GROUP_OBJECT_CLASS,
+                new Uid("deleteme", new Name("deleteme")), defaultGetOperation());
+        assertNull(result);
+    }
+
     // --- Helpers ---
 
     private Uid createTestGroup(String name, String description) {
