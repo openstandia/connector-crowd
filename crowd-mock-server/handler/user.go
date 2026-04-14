@@ -93,7 +93,7 @@ func (h *UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) {
 	} else if username != "" {
 		err = h.Pool.QueryRow(ctx,
 			`SELECT id, name, key, first_name, last_name, display_name, email, active, created_date, updated_date
-			 FROM users WHERE name = $1`, username,
+			 FROM users WHERE LOWER(name) = LOWER($1)`, username,
 		).Scan(&id, &user.Name, &user.Key, &user.FirstName, &user.LastName,
 			&user.DisplayName, &user.Email, &user.Active, &user.CreatedDate, &user.UpdatedDate)
 	} else {
@@ -139,7 +139,7 @@ func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UnixMilli()
 	result, err := h.Pool.Exec(r.Context(),
 		`UPDATE users SET first_name=$1, last_name=$2, display_name=$3, email=$4, active=$5, updated_date=$6
-		 WHERE name=$7`,
+		 WHERE LOWER(name) = LOWER($7)`,
 		user.FirstName, user.LastName, user.DisplayName, user.Email, user.Active, now, username,
 	)
 	if err != nil {
@@ -161,7 +161,7 @@ func (h *UserHandler) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.Pool.Exec(r.Context(), `DELETE FROM users WHERE name=$1`, username)
+	result, err := h.Pool.Exec(r.Context(), `DELETE FROM users WHERE LOWER(name) = LOWER($1)`, username)
 	if err != nil {
 		model.WriteError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
 		return
@@ -188,7 +188,7 @@ func (h *UserHandler) HandleUpdatePassword(w http.ResponseWriter, r *http.Reques
 	}
 
 	result, err := h.Pool.Exec(r.Context(),
-		`UPDATE users SET password=$1, updated_date=$2 WHERE name=$3`,
+		`UPDATE users SET password=$1, updated_date=$2 WHERE LOWER(name) = LOWER($3)`,
 		cred.Value, time.Now().UnixMilli(), username,
 	)
 	if err != nil {
@@ -220,7 +220,7 @@ func (h *UserHandler) HandleRenameUser(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now().UnixMilli()
 	result, err := h.Pool.Exec(r.Context(),
-		`UPDATE users SET name=$1, updated_date=$2 WHERE name=$3`,
+		`UPDATE users SET name=$1, updated_date=$2 WHERE LOWER(name) = LOWER($3)`,
 		newName, now, username,
 	)
 	if err != nil {
@@ -242,7 +242,7 @@ func (h *UserHandler) HandleRenameUser(w http.ResponseWriter, r *http.Request) {
 	var user model.UserEntity
 	err = h.Pool.QueryRow(r.Context(),
 		`SELECT name, key, first_name, last_name, display_name, email, active, created_date, updated_date
-		 FROM users WHERE name = $1`, newName,
+		 FROM users WHERE LOWER(name) = LOWER($1)`, newName,
 	).Scan(&user.Name, &user.Key, &user.FirstName, &user.LastName,
 		&user.DisplayName, &user.Email, &user.Active, &user.CreatedDate, &user.UpdatedDate)
 	if err != nil {
@@ -267,7 +267,7 @@ func (h *UserHandler) HandleStoreUserAttributes(w http.ResponseWriter, r *http.R
 
 	ctx := r.Context()
 	var userID int64
-	err := h.Pool.QueryRow(ctx, `SELECT id FROM users WHERE name=$1`, username).Scan(&userID)
+	err := h.Pool.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(name) = LOWER($1)`, username).Scan(&userID)
 	if err == pgx.ErrNoRows {
 		model.WriteError(w, http.StatusNotFound, "USER_NOT_FOUND",
 			fmt.Sprintf("User <%s> does not exist", username))
@@ -302,7 +302,7 @@ func (h *UserHandler) HandleAddUserToGroup(w http.ResponseWriter, r *http.Reques
 
 	ctx := r.Context()
 	var userID, groupID int64
-	err := h.Pool.QueryRow(ctx, `SELECT id FROM users WHERE name=$1`, userRef.Name).Scan(&userID)
+	err := h.Pool.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(name) = LOWER($1)`, userRef.Name).Scan(&userID)
 	if err == pgx.ErrNoRows {
 		model.WriteError(w, http.StatusNotFound, "USER_NOT_FOUND",
 			fmt.Sprintf("User <%s> does not exist", userRef.Name))
@@ -313,7 +313,7 @@ func (h *UserHandler) HandleAddUserToGroup(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE name=$1`, groupname).Scan(&groupID)
+	err = h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE LOWER(name) = LOWER($1)`, groupname).Scan(&groupID)
 	if err == pgx.ErrNoRows {
 		model.WriteError(w, http.StatusNotFound, "GROUP_NOT_FOUND",
 			fmt.Sprintf("Group <%s> does not exist", groupname))
@@ -348,8 +348,8 @@ func (h *UserHandler) HandleRemoveUserFromGroup(w http.ResponseWriter, r *http.R
 	ctx := r.Context()
 	_, err := h.Pool.Exec(ctx,
 		`DELETE FROM user_group_memberships
-		 WHERE user_id = (SELECT id FROM users WHERE name=$1)
-		   AND group_id = (SELECT id FROM groups WHERE name=$2)`,
+		 WHERE user_id = (SELECT id FROM users WHERE LOWER(name) = LOWER($1))
+		   AND group_id = (SELECT id FROM groups WHERE LOWER(name) = LOWER($2))`,
 		username, groupname,
 	)
 	if err != nil {
@@ -377,7 +377,7 @@ func (h *UserHandler) HandleGetGroupsForUser(w http.ResponseWriter, r *http.Requ
 		`SELECT g.name FROM groups g
 		 JOIN user_group_memberships ugm ON g.id = ugm.group_id
 		 JOIN users u ON u.id = ugm.user_id
-		 WHERE u.name = $1
+		 WHERE LOWER(u.name) = LOWER($1)
 		 ORDER BY g.name
 		 OFFSET $2 LIMIT $3`,
 		username, startIndex, maxResults,

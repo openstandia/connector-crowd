@@ -10,7 +10,7 @@ import (
 const schema = `
 CREATE TABLE IF NOT EXISTS users (
     id            BIGSERIAL PRIMARY KEY,
-    name          TEXT NOT NULL UNIQUE,
+    name          TEXT NOT NULL,
     key           TEXT NOT NULL UNIQUE,
     first_name    TEXT NOT NULL DEFAULT '',
     last_name     TEXT NOT NULL DEFAULT '',
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS groups (
     id            BIGSERIAL PRIMARY KEY,
-    name          TEXT NOT NULL UNIQUE,
+    name          TEXT NOT NULL,
     description   TEXT NOT NULL DEFAULT '',
     active        BOOLEAN NOT NULL DEFAULT TRUE,
     type          TEXT NOT NULL DEFAULT 'GROUP',
@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS user_attributes (
     attr_name  TEXT NOT NULL,
     attr_value TEXT NOT NULL
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_name_ci ON users(LOWER(name));
+CREATE UNIQUE INDEX IF NOT EXISTS idx_groups_name_ci ON groups(LOWER(name));
 CREATE INDEX IF NOT EXISTS idx_user_attr_user_id ON user_attributes(user_id);
 
 CREATE TABLE IF NOT EXISTS group_attributes (

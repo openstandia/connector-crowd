@@ -50,7 +50,7 @@ func (h *GroupHandler) HandleCreateGroup(w http.ResponseWriter, r *http.Request)
 	// Store attributes if provided
 	if group.Attributes != nil {
 		var groupID int64
-		err := h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE name=$1`, group.Name).Scan(&groupID)
+		err := h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE LOWER(name) = LOWER($1)`, group.Name).Scan(&groupID)
 		if err != nil {
 			model.WriteError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
 			return
@@ -76,7 +76,7 @@ func (h *GroupHandler) HandleGetGroup(w http.ResponseWriter, r *http.Request) {
 	var group model.GroupEntity
 	var id int64
 	err := h.Pool.QueryRow(ctx,
-		`SELECT id, name, description, active, type FROM groups WHERE name=$1`, groupname,
+		`SELECT id, name, description, active, type FROM groups WHERE LOWER(name) = LOWER($1)`, groupname,
 	).Scan(&id, &group.Name, &group.Description, &group.Active, &group.Type)
 
 	if err == pgx.ErrNoRows {
@@ -117,7 +117,7 @@ func (h *GroupHandler) HandleUpdateGroup(w http.ResponseWriter, r *http.Request)
 
 	now := time.Now().UnixMilli()
 	result, err := h.Pool.Exec(r.Context(),
-		`UPDATE groups SET description=$1, active=$2, updated_date=$3 WHERE name=$4`,
+		`UPDATE groups SET description=$1, active=$2, updated_date=$3 WHERE LOWER(name) = LOWER($4)`,
 		group.Description, group.Active, now, groupname,
 	)
 	if err != nil {
@@ -139,7 +139,7 @@ func (h *GroupHandler) HandleDeleteGroup(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, err := h.Pool.Exec(r.Context(), `DELETE FROM groups WHERE name=$1`, groupname)
+	result, err := h.Pool.Exec(r.Context(), `DELETE FROM groups WHERE LOWER(name) = LOWER($1)`, groupname)
 	if err != nil {
 		model.WriteError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
 		return
@@ -167,7 +167,7 @@ func (h *GroupHandler) HandleStoreGroupAttributes(w http.ResponseWriter, r *http
 
 	ctx := r.Context()
 	var groupID int64
-	err := h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE name=$1`, groupname).Scan(&groupID)
+	err := h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE LOWER(name) = LOWER($1)`, groupname).Scan(&groupID)
 	if err == pgx.ErrNoRows {
 		model.WriteError(w, http.StatusNotFound, "GROUP_NOT_FOUND",
 			fmt.Sprintf("Group <%s> does not exist", groupname))
@@ -202,7 +202,7 @@ func (h *GroupHandler) HandleAddChildGroup(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	var parentID, childID int64
 
-	err := h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE name=$1`, parentName).Scan(&parentID)
+	err := h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE LOWER(name) = LOWER($1)`, parentName).Scan(&parentID)
 	if err == pgx.ErrNoRows {
 		model.WriteError(w, http.StatusNotFound, "GROUP_NOT_FOUND",
 			fmt.Sprintf("Group <%s> does not exist", parentName))
@@ -213,7 +213,7 @@ func (h *GroupHandler) HandleAddChildGroup(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE name=$1`, ref.Name).Scan(&childID)
+	err = h.Pool.QueryRow(ctx, `SELECT id FROM groups WHERE LOWER(name) = LOWER($1)`, ref.Name).Scan(&childID)
 	if err == pgx.ErrNoRows {
 		model.WriteError(w, http.StatusNotFound, "GROUP_NOT_FOUND",
 			fmt.Sprintf("Group <%s> does not exist", ref.Name))
@@ -247,8 +247,8 @@ func (h *GroupHandler) HandleRemoveChildGroup(w http.ResponseWriter, r *http.Req
 	ctx := r.Context()
 	_, err := h.Pool.Exec(ctx,
 		`DELETE FROM group_group_memberships
-		 WHERE parent_group_id = (SELECT id FROM groups WHERE name=$1)
-		   AND child_group_id = (SELECT id FROM groups WHERE name=$2)`,
+		 WHERE parent_group_id = (SELECT id FROM groups WHERE LOWER(name) = LOWER($1))
+		   AND child_group_id = (SELECT id FROM groups WHERE LOWER(name) = LOWER($2))`,
 		parentName, childName,
 	)
 	if err != nil {
@@ -276,7 +276,7 @@ func (h *GroupHandler) HandleGetParentGroups(w http.ResponseWriter, r *http.Requ
 		`SELECT pg.name FROM groups pg
 		 JOIN group_group_memberships ggm ON pg.id = ggm.parent_group_id
 		 JOIN groups cg ON cg.id = ggm.child_group_id
-		 WHERE cg.name = $1
+		 WHERE LOWER(cg.name) = LOWER($1)
 		 ORDER BY pg.name
 		 OFFSET $2 LIMIT $3`,
 		groupname, startIndex, maxResults,
